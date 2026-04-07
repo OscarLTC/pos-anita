@@ -91,6 +91,7 @@ export default function InventoryScreen() {
       />
 
       <FlatList
+        style={styles.list}
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -126,6 +127,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    flexDirection: "column",
+    paddingHorizontal: 16,
   },
   center: {
     flex: 1,
@@ -134,10 +137,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   search_container: {
-    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#e8e8e8",
   },
   search_input: {
     height: 40,
@@ -151,16 +151,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff3f3",
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#ffd0d0",
+    borderRadius: 10,
   },
   low_stock_text: {
     fontSize: 13,
     color: "#c0392b",
     fontWeight: "500",
   },
+  list: {
+    flex: 1,
+  },
   list_content: {
     paddingBottom: 100,
+    flexGrow: 1,
   },
   empty: {
     paddingTop: 60,

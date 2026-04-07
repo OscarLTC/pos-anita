@@ -1,4 +1,10 @@
-import { ScrollView, TouchableOpacity, Text, StyleSheet, Alert } from "react-native";
+import {
+  ScrollView,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
 import type { Category } from "@/types";
 import { useInventoryStore } from "@/stores/inventory.store";
@@ -55,13 +61,16 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
       contentContainerStyle={styles.container}
     >
       <TouchableOpacity
         style={[styles.chip, !selected_id && styles.chip_active]}
         onPress={() => onSelect(null)}
       >
-        <Text style={[styles.chip_text, !selected_id && styles.chip_text_active]}>
+        <Text
+          style={[styles.chip_text, !selected_id && styles.chip_text_active]}
+        >
           Todos
         </Text>
       </TouchableOpacity>
@@ -80,7 +89,7 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
               selected_id === cat.id && styles.chip_text_active,
             ]}
           >
-            {cat.icon}  {cat.name}
+            {cat.icon} {cat.name}
           </Text>
         </TouchableOpacity>
       ))}
@@ -96,8 +105,10 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 0,
+  },
   container: {
-    paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
     flexDirection: "row",
