@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
 import type { product_unit, CreateProductInput } from "@/types";
@@ -20,19 +20,24 @@ const UNITS: { label: string; value: product_unit }[] = [
   { label: "Litro", value: "l" },
 ];
 
-export default function NewProductScreen() {
+export default function ProductFormScreen() {
   const router = useRouter();
-  const { store_id } = useAuthStore();
-  const { categories, addProduct } = useInventoryStore();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const isEdit = !!params.id;
 
-  const [name, setName] = useState("");
-  const [category_id, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [unit, setUnit] = useState<product_unit>("unit");
-  const [cost_price, setCostPrice] = useState("");
-  const [sale_price, setSalePrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [min_stock, setMinStock] = useState("");
-  const [barcode, setBarcode] = useState("");
+  const { store_id } = useAuthStore();
+  const { categories, products, addProduct, updateProduct } = useInventoryStore();
+
+  const existing = isEdit ? products.find((p) => p.id === params.id) : null;
+
+  const [name, setName] = useState(existing?.name ?? "");
+  const [category_id, setCategoryId] = useState(existing?.category_id ?? categories[0]?.id ?? "");
+  const [unit, setUnit] = useState<product_unit>(existing?.unit ?? "unit");
+  const [cost_price, setCostPrice] = useState(existing?.cost_price.toString() ?? "");
+  const [sale_price, setSalePrice] = useState(existing?.sale_price.toString() ?? "");
+  const [stock, setStock] = useState(existing?.stock.toString() ?? "");
+  const [min_stock, setMinStock] = useState(existing?.min_stock.toString() ?? "");
+  const [barcode, setBarcode] = useState(existing?.barcode ?? "");
   const [is_loading, setIsLoading] = useState(false);
 
   const margin = (() => {
@@ -44,25 +49,29 @@ export default function NewProductScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) return Alert.alert("Falta el nombre del producto");
-    if (!cost_price || !sale_price)
-      return Alert.alert("Falta precio de costo o venta");
-    if (!stock) return Alert.alert("Falta el stock inicial");
+    if (!cost_price || !sale_price) return Alert.alert("Falta precio de costo o venta");
+    if (!isEdit && !stock) return Alert.alert("Falta el stock inicial");
     if (!category_id) return Alert.alert("Selecciona una categoría");
 
+    const trimmed_barcode = barcode.trim();
     const input: CreateProductInput = {
       name: name.trim(),
       category_id,
       unit,
       cost_price: parseFloat(cost_price),
       sale_price: parseFloat(sale_price),
-      stock: parseInt(stock),
+      stock: parseInt(stock || "0"),
       min_stock: parseInt(min_stock || "5"),
-      barcode: barcode.trim() || undefined,
+      ...(trimmed_barcode && { barcode: trimmed_barcode }),
     };
 
     setIsLoading(true);
     try {
-      await addProduct(store_id!, input);
+      if (isEdit) {
+        await updateProduct(params.id!, input);
+      } else {
+        await addProduct(store_id!, input);
+      }
       router.back();
     } catch {
       Alert.alert("Error", "No se pudo guardar el producto");
@@ -83,6 +92,7 @@ export default function NewProductScreen() {
           onChangeText={setName}
         />
       </View>
+
       <View style={styles.section}>
         <Text style={styles.label}>Categoría</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -90,19 +100,11 @@ export default function NewProductScreen() {
             {categories.map((cat) => (
               <TouchableOpacity
                 key={cat.id}
-                style={[
-                  styles.chip,
-                  category_id === cat.id && styles.chip_active,
-                ]}
+                style={[styles.chip, category_id === cat.id && styles.chip_active]}
                 onPress={() => setCategoryId(cat.id)}
               >
-                <Text
-                  style={[
-                    styles.chip_text,
-                    category_id === cat.id && styles.chip_text_active,
-                  ]}
-                >
-                  {cat.name}
+                <Text style={[styles.chip_text, category_id === cat.id && styles.chip_text_active]}>
+                  {cat.icon}  {cat.name}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -119,12 +121,7 @@ export default function NewProductScreen() {
               style={[styles.chip, unit === u.value && styles.chip_active]}
               onPress={() => setUnit(u.value)}
             >
-              <Text
-                style={[
-                  styles.chip_text,
-                  unit === u.value && styles.chip_text_active,
-                ]}
-              >
+              <Text style={[styles.chip_text, unit === u.value && styles.chip_text_active]}>
                 {u.label}
               </Text>
             </TouchableOpacity>
@@ -160,16 +157,14 @@ export default function NewProductScreen() {
       {margin !== null && (
         <View style={styles.margin_preview}>
           <Text style={styles.margin_text}>
-            Margen: {margin}% — S/{" "}
-            {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)} por
-            unidad
+            Margen: {margin}% — S/ {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)} por unidad
           </Text>
         </View>
       )}
 
       <View style={styles.row_2}>
         <View style={[styles.section, { flex: 1 }]}>
-          <Text style={styles.label}>Stock inicial</Text>
+          <Text style={styles.label}>{isEdit ? "Stock" : "Stock inicial"}</Text>
           <TextInput
             style={styles.input}
             placeholder="0"
@@ -212,7 +207,9 @@ export default function NewProductScreen() {
         {is_loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.save_button_text}>Guardar producto</Text>
+          <Text style={styles.save_button_text}>
+            {isEdit ? "Guardar cambios" : "Guardar producto"}
+          </Text>
         )}
       </TouchableOpacity>
 

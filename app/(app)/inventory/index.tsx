@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useInventoryStore } from "@/stores/inventory.store";
@@ -27,12 +28,19 @@ export default function InventoryScreen() {
     loadInventory,
     setSearchQuery,
     setSelectedCategory,
+    archiveProduct,
     getFiltered,
     getLowStock,
   } = useInventoryStore();
 
+  const handleDelete = (id: string, name: string) => {
+    Alert.alert("Eliminar producto", `¿Eliminar "${name}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: () => archiveProduct(id) },
+    ]);
+  };
+
   useEffect(() => {
-    console.log(store_id);
     if (store_id) loadInventory(store_id);
   }, [store_id]);
 
@@ -98,6 +106,8 @@ export default function InventoryScreen() {
           <ProductCard
             product={item}
             onPress={() => router.push(`/(app)/inventory/${item.id}`)}
+            onEdit={() => router.push({ pathname: "/(app)/inventory/new", params: { id: item.id } })}
+            onDelete={() => handleDelete(item.id, item.name)}
           />
         )}
         contentContainerStyle={styles.list_content}

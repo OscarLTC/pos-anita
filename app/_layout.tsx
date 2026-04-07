@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { useAuthStore } from "@/stores/auth.store";
@@ -31,8 +32,10 @@ export default function RootLayout() {
   }, [user, segments]);
 
   return (
-    <SafeAreaProvider>
-      <Slot />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <Slot />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
