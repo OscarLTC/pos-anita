@@ -1,10 +1,5 @@
 import { create } from "zustand";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  type User,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 
 interface AuthState {

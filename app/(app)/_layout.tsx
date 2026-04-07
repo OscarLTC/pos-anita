@@ -8,6 +8,7 @@ export default function AppLayout() {
         headerShadowVisible: false,
         headerTintColor: "#111",
         headerTitleStyle: { fontWeight: "500" },
+        headerTitle: "Inventario",
       }}
     />
   );

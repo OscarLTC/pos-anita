@@ -41,6 +41,8 @@ export interface ProductWithMeta extends Product {
   is_low_stock: boolean;
 }
 
+export type CreateCategoryInput = Pick<Category, "name" | "icon">;
+
 export type CreateProductInput = Omit<
   Product,
   "id" | "store_id" | "status" | "created_at" | "updated_at"

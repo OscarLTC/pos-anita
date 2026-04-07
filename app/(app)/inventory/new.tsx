@@ -83,7 +83,6 @@ export default function NewProductScreen() {
           onChangeText={setName}
         />
       </View>
-
       <View style={styles.section}>
         <Text style={styles.label}>Categoría</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>

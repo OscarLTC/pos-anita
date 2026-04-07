@@ -4,7 +4,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { useAuthStore } from "@/stores/auth.store";
-import { View, ActivityIndicator } from "react-native";
 
 export default function RootLayout() {
   const { user, setUser } = useAuthStore();
@@ -30,18 +29,6 @@ export default function RootLayout() {
       router.replace("/(app)/inventory");
     }
   }, [user, segments]);
-
-  if (user === undefined) {
-    return (
-      <SafeAreaProvider>
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <ActivityIndicator size="large" color="#111" />
-        </View>
-      </SafeAreaProvider>
-    );
-  }
 
   return (
     <SafeAreaProvider>

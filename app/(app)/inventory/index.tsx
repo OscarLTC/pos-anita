@@ -32,6 +32,7 @@ export default function InventoryScreen() {
   } = useInventoryStore();
 
   useEffect(() => {
+    console.log(store_id);
     if (store_id) loadInventory(store_id);
   }, [store_id]);
 
