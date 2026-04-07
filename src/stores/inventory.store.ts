@@ -113,7 +113,8 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
         (p) =>
           (!selected_category_id || p.category_id === selected_category_id) &&
           (!search_query ||
-            p.name.toLowerCase().includes(search_query.toLowerCase())),
+            p.name.toLowerCase().includes(search_query.toLowerCase()) ||
+            p.barcode === search_query),
       )
       .map((p) => toMeta(p, categories));
   },

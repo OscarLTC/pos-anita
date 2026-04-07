@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import {
   ScrollView,
   TouchableOpacity,
@@ -98,7 +99,7 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
         style={styles.chip_add}
         onPress={() => router.push("/(app)/inventory/categories/new")}
       >
-        <Text style={styles.chip_add_text}>+</Text>
+        <Ionicons name="add" size={20} color="#888" />
       </TouchableOpacity>
     </ScrollView>
   );
@@ -142,10 +143,5 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     alignItems: "center",
     justifyContent: "center",
-  },
-  chip_add_text: {
-    fontSize: 18,
-    color: "#888",
-    lineHeight: 22,
   },
 });

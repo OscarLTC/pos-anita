@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
+import { Ionicons } from "@expo/vector-icons";
 import type { ProductWithMeta } from "@/types";
 
 interface Props {
@@ -19,22 +20,38 @@ export function ProductCard({ product, onPress, onEdit, onDelete }: Props) {
     <View style={styles.actions}>
       <TouchableOpacity
         style={styles.action_edit}
-        onPress={() => { close(); onEdit(); }}
+        onPress={() => {
+          close();
+          onEdit();
+        }}
       >
+        <Ionicons name="pencil-outline" size={20} color="#fff" />
         <Text style={styles.action_text}>Editar</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.action_delete}
-        onPress={() => { close(); onDelete(); }}
+        onPress={() => {
+          close();
+          onDelete();
+        }}
       >
+        <Ionicons name="trash-outline" size={20} color="#fff" />
         <Text style={styles.action_text}>Eliminar</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <Swipeable ref={swipeable_ref} renderRightActions={renderRightActions} overshootRight={false}>
-      <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <Swipeable
+      ref={swipeable_ref}
+      renderRightActions={renderRightActions}
+      overshootRight={false}
+    >
+      <TouchableOpacity
+        style={styles.container}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
         <View style={styles.left}>
           <Text style={styles.name} numberOfLines={1}>
             {product.name}
@@ -46,8 +63,18 @@ export function ProductCard({ product, onPress, onEdit, onDelete }: Props) {
               </Text>
             </View>
             <View style={styles.stock_badge}>
-              <View style={[styles.stock_dot, product.is_low_stock && styles.stock_dot_low]} />
-              <Text style={[styles.stock_text, product.is_low_stock && styles.stock_text_low]}>
+              <View
+                style={[
+                  styles.stock_dot,
+                  product.is_low_stock && styles.stock_dot_low,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.stock_text,
+                  product.is_low_stock && styles.stock_text_low,
+                ]}
+              >
                 {product.stock} {product.unit === "unit" ? "uds" : product.unit}
               </Text>
             </View>
@@ -56,7 +83,9 @@ export function ProductCard({ product, onPress, onEdit, onDelete }: Props) {
 
         <View style={styles.right}>
           <Text style={styles.price}>S/ {product.sale_price.toFixed(2)}</Text>
-          <Text style={styles.margin}>{(product.margin * 100).toFixed(0)}% margen</Text>
+          <Text style={styles.margin}>
+            {(product.margin * 100).toFixed(0)}% margen
+          </Text>
         </View>
       </TouchableOpacity>
     </Swipeable>
@@ -139,17 +168,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#3498db",
     justifyContent: "center",
     alignItems: "center",
-    width: 80,
+    width: 72,
+    gap: 4,
   },
   action_delete: {
     backgroundColor: "#e74c3c",
     justifyContent: "center",
     alignItems: "center",
-    width: 80,
+    width: 72,
+    gap: 4,
   },
   action_text: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "600",
   },
 });

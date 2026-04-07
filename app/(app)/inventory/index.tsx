@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { useRouter } from "expo-router";
 import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
@@ -33,11 +35,35 @@ export default function InventoryScreen() {
     getLowStock,
   } = useInventoryStore();
 
+  const [scanner_visible, setScannerVisible] = useState(false);
+
   const handleDelete = (id: string, name: string) => {
     Alert.alert("Eliminar producto", `¿Eliminar "${name}"?`, [
       { text: "Cancelar", style: "cancel" },
-      { text: "Eliminar", style: "destructive", onPress: () => archiveProduct(id) },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: () => archiveProduct(id),
+      },
     ]);
+  };
+
+  const handleBarcodeScanned = (code: string) => {
+    setScannerVisible(false);
+    setTimeout(() => {
+      const { products } = useInventoryStore.getState();
+      const matches = products.filter((p) => p.barcode === code);
+      if (matches.length === 0) {
+        Alert.alert(
+          "No encontrado",
+          `No hay productos con el código "${code}"`,
+        );
+      } else if (matches.length === 1) {
+        router.push(`/(app)/inventory/${matches[0].id}`);
+      } else {
+        setSearchQuery(code);
+      }
+    }, 400);
   };
 
   useEffect(() => {
@@ -81,7 +107,19 @@ export default function InventoryScreen() {
           onChangeText={setSearchQuery}
           clearButtonMode="while-editing"
         />
+        <TouchableOpacity
+          style={styles.scan_button}
+          onPress={() => setScannerVisible(true)}
+        >
+          <Ionicons name="barcode-outline" size={22} color="#111" />
+        </TouchableOpacity>
       </View>
+
+      <BarcodeScannerModal
+        visible={scanner_visible}
+        onScanned={handleBarcodeScanned}
+        onClose={() => setScannerVisible(false)}
+      />
 
       {low_stock.length > 0 && (
         <TouchableOpacity style={styles.low_stock_banner}>
@@ -106,7 +144,12 @@ export default function InventoryScreen() {
           <ProductCard
             product={item}
             onPress={() => router.push(`/(app)/inventory/${item.id}`)}
-            onEdit={() => router.push({ pathname: "/(app)/inventory/new", params: { id: item.id } })}
+            onEdit={() =>
+              router.push({
+                pathname: "/(app)/inventory/new",
+                params: { id: item.id },
+              })
+            }
             onDelete={() => handleDelete(item.id, item.name)}
           />
         )}
@@ -148,8 +191,12 @@ const styles = StyleSheet.create({
   },
   search_container: {
     paddingVertical: 10,
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
   },
   search_input: {
+    flex: 1,
     height: 40,
     backgroundColor: "#f5f5f5",
     borderRadius: 10,
@@ -213,6 +260,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
+  },
+  scan_button: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#f5f5f5",
+    alignItems: "center",
+    justifyContent: "center",
   },
   fab_text: {
     color: "#fff",

@@ -14,7 +14,11 @@ import { useAuthStore } from "@/stores/auth.store";
 
 export default function CategoryFormScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string; name?: string; icon?: string }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    name?: string;
+    icon?: string;
+  }>();
   const isEdit = !!params.id;
 
   const { store_id } = useAuthStore();
