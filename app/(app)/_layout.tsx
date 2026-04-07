@@ -32,17 +32,6 @@ export default function AppLayout() {
                 color={colors.text}
               />
             </TouchableOpacity>
-          </View>
-        ),
-        headerLeft: () => (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 20,
-              paddingHorizontal: 8,
-            }}
-          >
             <TouchableOpacity onPress={logout} hitSlop={8}>
               <Ionicons name="log-out-outline" size={22} color={colors.text} />
             </TouchableOpacity>

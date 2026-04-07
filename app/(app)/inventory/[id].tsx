@@ -14,6 +14,7 @@ export default function ProductDetailScreen() {
 
   const product = products.find((p) => p.id === id);
   const category = categories.find((c) => c.id === product?.category_id);
+  const is_low_stock = product ? product.stock <= product.min_stock : false;
   const s = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function ProductDetailScreen() {
             <Text style={s.stock_number}>{product.min_stock}</Text>
             <Text style={s.stock_label}>mínimo</Text>
           </View>
-          {product.is_low_stock && (
+          {is_low_stock && (
             <View style={[s.stock_card, s.stock_card_alert]}>
               <Text style={s.stock_alert_text}>Stock bajo</Text>
             </View>
