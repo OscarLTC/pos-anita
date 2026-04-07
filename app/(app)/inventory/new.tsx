@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
+import { useThemeStore, type AppColors } from "@/theme";
 import type { product_unit, CreateProductInput } from "@/types";
 
 const UNITS: { label: string; value: product_unit }[] = [
@@ -30,6 +31,7 @@ export default function ProductFormScreen() {
   const isEdit = !!params.id;
 
   const { store_id } = useAuthStore();
+  const { colors } = useThemeStore();
   const { categories, products, addProduct, updateProduct } =
     useInventoryStore();
 
@@ -53,6 +55,8 @@ export default function ProductFormScreen() {
   const [barcode, setBarcode] = useState(existing?.barcode ?? "");
   const [scanner_visible, setScannerVisible] = useState(false);
   const [is_loading, setIsLoading] = useState(false);
+
+  const s = useMemo(() => makeStyles(colors), [colors]);
 
   const margin = (() => {
     const cost = parseFloat(cost_price);
@@ -97,38 +101,38 @@ export default function ProductFormScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.section}>
-          <Text style={styles.label}>Nombre</Text>
+      <ScrollView style={s.container} keyboardShouldPersistTaps="handled">
+        <View style={s.section}>
+          <Text style={s.label}>Nombre</Text>
           <TextInput
-            style={styles.input}
+            style={s.input}
             placeholder="Ej: Coca-Cola 600ml"
-            placeholderTextColor="#aaa"
+            placeholderTextColor={colors.text4}
             value={name}
             onChangeText={setName}
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Categoría</Text>
+        <View style={s.section}>
+          <Text style={s.label}>Categoría</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.chips_row}>
+            <View style={s.chips_row}>
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
                   style={[
-                    styles.chip,
-                    category_id === cat.id && styles.chip_active,
+                    s.chip,
+                    category_id === cat.id && s.chip_active,
                   ]}
                   onPress={() => setCategoryId(cat.id)}
                 >
                   <Text
                     style={[
-                      styles.chip_text,
-                      category_id === cat.id && styles.chip_text_active,
+                      s.chip_text,
+                      category_id === cat.id && s.chip_text_active,
                     ]}
                   >
                     {cat.icon} {cat.name}
@@ -139,19 +143,19 @@ export default function ProductFormScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Unidad</Text>
-          <View style={styles.chips_row}>
+        <View style={s.section}>
+          <Text style={s.label}>Unidad</Text>
+          <View style={s.chips_row}>
             {UNITS.map((u) => (
               <TouchableOpacity
                 key={u.value}
-                style={[styles.chip, unit === u.value && styles.chip_active]}
+                style={[s.chip, unit === u.value && s.chip_active]}
                 onPress={() => setUnit(u.value)}
               >
                 <Text
                   style={[
-                    styles.chip_text,
-                    unit === u.value && styles.chip_text_active,
+                    s.chip_text,
+                    unit === u.value && s.chip_text_active,
                   ]}
                 >
                   {u.label}
@@ -161,24 +165,24 @@ export default function ProductFormScreen() {
           </View>
         </View>
 
-        <View style={styles.row_2}>
-          <View style={[styles.section, { flex: 1 }]}>
-            <Text style={styles.label}>Precio costo (S/)</Text>
+        <View style={s.row_2}>
+          <View style={[s.section, { flex: 1 }]}>
+            <Text style={s.label}>Precio costo (S/)</Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               placeholder="0.00"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.text4}
               value={cost_price}
               onChangeText={setCostPrice}
               keyboardType="decimal-pad"
             />
           </View>
-          <View style={[styles.section, { flex: 1 }]}>
-            <Text style={styles.label}>Precio venta (S/)</Text>
+          <View style={[s.section, { flex: 1 }]}>
+            <Text style={s.label}>Precio venta (S/)</Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               placeholder="0.00"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.text4}
               value={sale_price}
               onChangeText={setSalePrice}
               keyboardType="decimal-pad"
@@ -187,8 +191,8 @@ export default function ProductFormScreen() {
         </View>
 
         {margin !== null && (
-          <View style={styles.margin_preview}>
-            <Text style={styles.margin_text}>
+          <View style={s.margin_preview}>
+            <Text style={s.margin_text}>
               Margen: {margin}% — S/{" "}
               {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)} por
               unidad
@@ -196,26 +200,26 @@ export default function ProductFormScreen() {
           </View>
         )}
 
-        <View style={styles.row_2}>
-          <View style={[styles.section, { flex: 1 }]}>
-            <Text style={styles.label}>
+        <View style={s.row_2}>
+          <View style={[s.section, { flex: 1 }]}>
+            <Text style={s.label}>
               {isEdit ? "Stock" : "Stock inicial"}
             </Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               placeholder="0"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.text4}
               value={stock}
               onChangeText={setStock}
               keyboardType="number-pad"
             />
           </View>
-          <View style={[styles.section, { flex: 1 }]}>
-            <Text style={styles.label}>Stock mínimo</Text>
+          <View style={[s.section, { flex: 1 }]}>
+            <Text style={s.label}>Stock mínimo</Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               placeholder="5"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.text4}
               value={min_stock}
               onChangeText={setMinStock}
               keyboardType="number-pad"
@@ -223,22 +227,22 @@ export default function ProductFormScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Código de barras (opcional)</Text>
-          <View style={styles.barcode_row}>
+        <View style={s.section}>
+          <Text style={s.label}>Código de barras (opcional)</Text>
+          <View style={s.barcode_row}>
             <TextInput
-              style={[styles.input, { flex: 1 }]}
+              style={[s.input, { flex: 1 }]}
               placeholder="Escanear o escribir..."
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.text4}
               value={barcode}
               onChangeText={setBarcode}
               keyboardType="number-pad"
             />
             <TouchableOpacity
-              style={styles.scan_button}
+              style={s.scan_button}
               onPress={() => setScannerVisible(true)}
             >
-              <Ionicons name="barcode-outline" size={22} color="#111" />
+              <Ionicons name="barcode-outline" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -253,17 +257,14 @@ export default function ProductFormScreen() {
         />
 
         <TouchableOpacity
-          style={[
-            styles.save_button,
-            is_loading && styles.save_button_disabled,
-          ]}
+          style={[s.save_button, is_loading && s.save_button_disabled]}
           onPress={handleSave}
           disabled={is_loading}
         >
           {is_loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.accent_text} />
           ) : (
-            <Text style={styles.save_button_text}>
+            <Text style={s.save_button_text}>
               {isEdit ? "Guardar cambios" : "Guardar producto"}
             </Text>
           )}
@@ -274,103 +275,104 @@ export default function ProductFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  section: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 8,
-  },
-  label: {
-    fontSize: 13,
-    color: "#888",
-    fontWeight: "500",
-  },
-  input: {
-    height: 44,
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: "#111",
-    backgroundColor: "#fafafa",
-  },
-  chips_row: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-  },
-  chip_active: {
-    backgroundColor: "#111",
-    borderColor: "#111",
-  },
-  chip_text: {
-    fontSize: 13,
-    color: "#555",
-  },
-  chip_text_active: {
-    color: "#fff",
-    fontWeight: "500",
-  },
-  row_2: {
-    flexDirection: "row",
-    gap: 12,
-    paddingTop: 16,
-  },
-  margin_preview: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    backgroundColor: "#f0faf5",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  margin_text: {
-    fontSize: 13,
-    color: "#27ae60",
-    fontWeight: "500",
-  },
-  save_button: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    height: 50,
-    backgroundColor: "#111",
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  save_button_disabled: {
-    opacity: 0.6,
-  },
-  save_button_text: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  barcode_row: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  scan_button: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-    backgroundColor: "#fafafa",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+const makeStyles = (c: AppColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.bg,
+    },
+    section: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      gap: 8,
+    },
+    label: {
+      fontSize: 13,
+      color: c.text3,
+      fontWeight: "500",
+    },
+    input: {
+      height: 44,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      fontSize: 15,
+      color: c.text,
+      backgroundColor: c.bg4,
+    },
+    chips_row: {
+      flexDirection: "row",
+      gap: 8,
+      flexWrap: "wrap",
+    },
+    chip: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 20,
+      borderWidth: 0.5,
+      borderColor: c.border,
+    },
+    chip_active: {
+      backgroundColor: c.accent,
+      borderColor: c.accent,
+    },
+    chip_text: {
+      fontSize: 13,
+      color: c.text2,
+    },
+    chip_text_active: {
+      color: c.accent_text,
+      fontWeight: "500",
+    },
+    row_2: {
+      flexDirection: "row",
+      gap: 12,
+      paddingTop: 16,
+    },
+    margin_preview: {
+      marginHorizontal: 16,
+      marginTop: 8,
+      backgroundColor: c.margin_bg,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 8,
+    },
+    margin_text: {
+      fontSize: 13,
+      color: c.margin_text,
+      fontWeight: "500",
+    },
+    save_button: {
+      marginHorizontal: 16,
+      marginTop: 24,
+      height: 50,
+      backgroundColor: c.accent,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    save_button_disabled: {
+      opacity: 0.6,
+    },
+    save_button_text: {
+      color: c.accent_text,
+      fontSize: 16,
+      fontWeight: "500",
+    },
+    barcode_row: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+    },
+    scan_button: {
+      width: 44,
+      height: 44,
+      borderRadius: 10,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      backgroundColor: c.bg4,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });

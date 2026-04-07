@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   ScrollView,
@@ -9,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import type { Category } from "@/types";
 import { useInventoryStore } from "@/stores/inventory.store";
+import { useThemeStore, type AppColors } from "@/theme";
 
 interface Props {
   categories: Category[];
@@ -19,6 +21,8 @@ interface Props {
 export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
   const router = useRouter();
   const { products, removeCategory } = useInventoryStore();
+  const { colors } = useThemeStore();
+  const s = useMemo(() => makeStyles(colors), [colors]);
 
   const handleLongPress = (cat: Category) => {
     Alert.alert(cat.name, undefined, [
@@ -62,16 +66,14 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={styles.scroll}
-      contentContainerStyle={styles.container}
+      style={s.scroll}
+      contentContainerStyle={s.container}
     >
       <TouchableOpacity
-        style={[styles.chip, !selected_id && styles.chip_active]}
+        style={[s.chip, !selected_id && s.chip_active]}
         onPress={() => onSelect(null)}
       >
-        <Text
-          style={[styles.chip_text, !selected_id && styles.chip_text_active]}
-        >
+        <Text style={[s.chip_text, !selected_id && s.chip_text_active]}>
           Todos
         </Text>
       </TouchableOpacity>
@@ -79,15 +81,15 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
       {categories.map((cat) => (
         <TouchableOpacity
           key={cat.id}
-          style={[styles.chip, selected_id === cat.id && styles.chip_active]}
+          style={[s.chip, selected_id === cat.id && s.chip_active]}
           onPress={() => onSelect(selected_id === cat.id ? null : cat.id)}
           onLongPress={() => handleLongPress(cat)}
           delayLongPress={400}
         >
           <Text
             style={[
-              styles.chip_text,
-              selected_id === cat.id && styles.chip_text_active,
+              s.chip_text,
+              selected_id === cat.id && s.chip_text_active,
             ]}
           >
             {cat.icon} {cat.name}
@@ -96,52 +98,53 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
       ))}
 
       <TouchableOpacity
-        style={styles.chip_add}
+        style={s.chip_add}
         onPress={() => router.push("/(app)/inventory/categories/new")}
       >
-        <Ionicons name="add" size={20} color="#888" />
+        <Ionicons name="add" size={20} color={colors.text3} />
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 0,
-  },
-  container: {
-    paddingVertical: 10,
-    gap: 8,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
-  },
-  chip_active: {
-    backgroundColor: "#111",
-    borderColor: "#111",
-  },
-  chip_text: {
-    fontSize: 13,
-    color: "#555",
-  },
-  chip_text_active: {
-    color: "#fff",
-    fontWeight: "500",
-  },
-  chip_add: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+const makeStyles = (c: AppColors) =>
+  StyleSheet.create({
+    scroll: {
+      flexGrow: 0,
+    },
+    container: {
+      paddingVertical: 10,
+      gap: 8,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    chip: {
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 20,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      backgroundColor: c.bg,
+    },
+    chip_active: {
+      backgroundColor: c.accent,
+      borderColor: c.accent,
+    },
+    chip_text: {
+      fontSize: 13,
+      color: c.text2,
+    },
+    chip_text_active: {
+      color: c.accent_text,
+      fontWeight: "500",
+    },
+    chip_add: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });

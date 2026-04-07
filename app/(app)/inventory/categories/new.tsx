@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useThemeStore, type AppColors } from "@/theme";
 
 export default function CategoryFormScreen() {
   const router = useRouter();
@@ -22,11 +23,14 @@ export default function CategoryFormScreen() {
   const isEdit = !!params.id;
 
   const { store_id } = useAuthStore();
+  const { colors } = useThemeStore();
   const { addCategory, updateCategory } = useInventoryStore();
 
   const [name, setName] = useState(params.name ?? "");
   const [icon, setIcon] = useState(params.icon ?? "🛒");
   const [is_loading, setIsLoading] = useState(false);
+
+  const s = useMemo(() => makeStyles(colors), [colors]);
 
   const handleSave = async () => {
     if (!name.trim()) return Alert.alert("Falta el nombre de la categoría");
@@ -47,24 +51,24 @@ export default function CategoryFormScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.icon_section}>
-        <Text style={styles.icon_label}>Ícono</Text>
+    <View style={s.container}>
+      <View style={s.icon_section}>
+        <Text style={s.icon_label}>Ícono</Text>
         <TextInput
-          style={styles.icon_input}
+          style={s.icon_input}
           value={icon}
           onChangeText={setIcon}
           maxLength={8}
         />
-        <Text style={styles.icon_hint}>Escribe un emoji desde el teclado</Text>
+        <Text style={s.icon_hint}>Escribe un emoji desde el teclado</Text>
       </View>
 
-      <View style={styles.name_section}>
-        <Text style={styles.label}>Nombre</Text>
+      <View style={s.name_section}>
+        <Text style={s.label}>Nombre</Text>
         <TextInput
-          style={styles.input}
+          style={s.input}
           placeholder="Ej: Bebidas"
-          placeholderTextColor="#aaa"
+          placeholderTextColor={colors.text4}
           value={name}
           onChangeText={setName}
           autoFocus={!isEdit}
@@ -72,14 +76,14 @@ export default function CategoryFormScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.save_button, is_loading && styles.save_button_disabled]}
+        style={[s.save_button, is_loading && s.save_button_disabled]}
         onPress={handleSave}
         disabled={is_loading}
       >
         {is_loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.accent_text} />
         ) : (
-          <Text style={styles.save_button_text}>
+          <Text style={s.save_button_text}>
             {isEdit ? "Guardar cambios" : "Crear categoría"}
           </Text>
         )}
@@ -88,69 +92,70 @@ export default function CategoryFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    gap: 20,
-  },
-  icon_section: {
-    alignItems: "center",
-    gap: 8,
-  },
-  icon_label: {
-    fontSize: 13,
-    color: "#888",
-    fontWeight: "500",
-  },
-  icon_input: {
-    fontSize: 52,
-    textAlign: "center",
-    width: 90,
-    height: 90,
-    borderWidth: 0.5,
-    borderColor: "#e0e0e0",
-    borderRadius: 20,
-    backgroundColor: "#fafafa",
-  },
-  icon_hint: {
-    fontSize: 12,
-    color: "#bbb",
-  },
-  name_section: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 13,
-    color: "#888",
-    fontWeight: "500",
-  },
-  input: {
-    height: 44,
-    borderWidth: 0.5,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: "#111",
-    backgroundColor: "#fafafa",
-  },
-  save_button: {
-    height: 50,
-    backgroundColor: "#111",
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 4,
-  },
-  save_button_disabled: {
-    opacity: 0.6,
-  },
-  save_button_text: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-});
+const makeStyles = (c: AppColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.bg,
+      paddingHorizontal: 16,
+      paddingTop: 24,
+      gap: 20,
+    },
+    icon_section: {
+      alignItems: "center",
+      gap: 8,
+    },
+    icon_label: {
+      fontSize: 13,
+      color: c.text3,
+      fontWeight: "500",
+    },
+    icon_input: {
+      fontSize: 52,
+      textAlign: "center",
+      width: 90,
+      height: 90,
+      borderWidth: 0.5,
+      borderColor: c.border2,
+      borderRadius: 20,
+      backgroundColor: c.bg4,
+    },
+    icon_hint: {
+      fontSize: 12,
+      color: c.text4,
+    },
+    name_section: {
+      gap: 8,
+    },
+    label: {
+      fontSize: 13,
+      color: c.text3,
+      fontWeight: "500",
+    },
+    input: {
+      height: 44,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      fontSize: 15,
+      color: c.text,
+      backgroundColor: c.bg4,
+    },
+    save_button: {
+      height: 50,
+      backgroundColor: c.accent,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 4,
+    },
+    save_button_disabled: {
+      opacity: 0.6,
+    },
+    save_button_text: {
+      color: c.accent_text,
+      fontSize: 16,
+      fontWeight: "500",
+    },
+  });

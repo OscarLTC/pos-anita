@@ -2,12 +2,15 @@ import { useEffect } from "react";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { StatusBar } from "expo-status-bar";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { useAuthStore } from "@/stores/auth.store";
+import { useThemeStore } from "@/theme";
 
 export default function RootLayout() {
   const { user, setUser } = useAuthStore();
+  const { isDark, colors } = useThemeStore();
   const router = useRouter();
   const segments = useSegments();
 
@@ -34,6 +37,10 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        <StatusBar
+          style={isDark ? "light" : "dark"}
+          backgroundColor={colors.bg}
+        />
         <Slot />
       </SafeAreaProvider>
     </GestureHandlerRootView>
