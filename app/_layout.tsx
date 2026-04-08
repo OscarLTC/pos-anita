@@ -25,7 +25,6 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    // Wait until both user and store are resolved before routing
     if (user === undefined) return;
     if (user && store === undefined) return;
 
@@ -42,10 +41,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar
-          style={isDark ? "light" : "dark"}
-          backgroundColor={colors.bg}
-        />
+        <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.bg} />
         <Slot />
       </SafeAreaProvider>
     </GestureHandlerRootView>
