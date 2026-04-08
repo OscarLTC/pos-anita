@@ -5,62 +5,27 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
-  Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
 import type { Category } from "@/types";
-import { useInventoryStore } from "@/stores/inventory.store";
 import { useThemeStore, type AppColors } from "@/theme";
 
 interface Props {
   categories: Category[];
   selected_id: string | null;
   onSelect: (id: string | null) => void;
+  onLongPressCategory: (cat: Category) => void;
+  onAddCategory: () => void;
 }
 
-export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
-  const router = useRouter();
-  const { products, removeCategory } = useInventoryStore();
+export function CategoryFilter({
+  categories,
+  selected_id,
+  onSelect,
+  onLongPressCategory,
+  onAddCategory,
+}: Props) {
   const { colors } = useThemeStore();
   const s = useMemo(() => makeStyles(colors), [colors]);
-
-  const handleLongPress = (cat: Category) => {
-    Alert.alert(cat.name, undefined, [
-      {
-        text: "Editar",
-        onPress: () =>
-          router.push({
-            pathname: "/(app)/inventory/categories/new",
-            params: { id: cat.id, name: cat.name, icon: cat.icon },
-          }),
-      },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () => confirmDelete(cat),
-      },
-      { text: "Cancelar", style: "cancel" },
-    ]);
-  };
-
-  const confirmDelete = (cat: Category) => {
-    const count = products.filter((p) => p.category_id === cat.id).length;
-    if (count > 0) {
-      Alert.alert(
-        "No se puede eliminar",
-        `"${cat.name}" tiene ${count} producto${count > 1 ? "s" : ""} asignado${count > 1 ? "s" : ""}. Reasígnalos antes de eliminar.`,
-      );
-      return;
-    }
-    Alert.alert("Eliminar categoría", `¿Eliminar "${cat.name}"?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () => removeCategory(cat.id),
-      },
-    ]);
-  };
 
   return (
     <ScrollView
@@ -83,7 +48,7 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
           key={cat.id}
           style={[s.chip, selected_id === cat.id && s.chip_active]}
           onPress={() => onSelect(selected_id === cat.id ? null : cat.id)}
-          onLongPress={() => handleLongPress(cat)}
+          onLongPress={() => onLongPressCategory(cat)}
           delayLongPress={400}
         >
           <Text
@@ -97,10 +62,7 @@ export function CategoryFilter({ categories, selected_id, onSelect }: Props) {
         </TouchableOpacity>
       ))}
 
-      <TouchableOpacity
-        style={s.chip_add}
-        onPress={() => router.push("/(app)/inventory/categories/new")}
-      >
+      <TouchableOpacity style={s.chip_add} onPress={onAddCategory}>
         <Ionicons name="add" size={20} color={colors.text3} />
       </TouchableOpacity>
     </ScrollView>

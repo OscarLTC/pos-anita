@@ -25,6 +25,7 @@ export default function InventoryScreen() {
   const { colors } = useThemeStore();
   const {
     categories,
+    products,
     is_loading,
     error,
     search_query,
@@ -33,12 +34,47 @@ export default function InventoryScreen() {
     setSearchQuery,
     setSelectedCategory,
     archiveProduct,
+    removeCategory,
     getFiltered,
     getLowStock,
   } = useInventoryStore();
 
   const [scanner_visible, setScannerVisible] = useState(false);
   const s = useMemo(() => makeStyles(colors), [colors]);
+
+  const handleCategoryLongPress = (cat: { id: string; name: string; icon: string }) => {
+    Alert.alert(cat.name, undefined, [
+      {
+        text: "Editar",
+        onPress: () =>
+          router.push({
+            pathname: "/(app)/inventory/categories/new",
+            params: { id: cat.id, name: cat.name, icon: cat.icon },
+          }),
+      },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: () => confirmDeleteCategory(cat),
+      },
+      { text: "Cancelar", style: "cancel" },
+    ]);
+  };
+
+  const confirmDeleteCategory = (cat: { id: string; name: string }) => {
+    const count = products.filter((p) => p.category_id === cat.id).length;
+    if (count > 0) {
+      Alert.alert(
+        "No se puede eliminar",
+        `"${cat.name}" tiene ${count} producto${count > 1 ? "s" : ""} asignado${count > 1 ? "s" : ""}. Reasígnalos antes de eliminar.`,
+      );
+      return;
+    }
+    Alert.alert("Eliminar categoría", `¿Eliminar "${cat.name}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: () => removeCategory(cat.id) },
+    ]);
+  };
 
   const handleDelete = (id: string, name: string) => {
     Alert.alert("Eliminar producto", `¿Eliminar "${name}"?`, [
@@ -137,6 +173,8 @@ export default function InventoryScreen() {
         categories={categories}
         selected_id={selected_category_id}
         onSelect={setSelectedCategory}
+        onLongPressCategory={handleCategoryLongPress}
+        onAddCategory={() => router.push("/(app)/inventory/categories/new")}
       />
 
       <FlatList
