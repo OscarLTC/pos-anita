@@ -9,6 +9,7 @@ import type {
 } from "@/types";
 import { productService } from "@/services/firestore/products";
 import { categoryService } from "@/services/firestore/categories";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface InventoryState {
   products: Product[];
@@ -41,16 +42,24 @@ const FALLBACK_CATEGORY: Category = {
   created_at: new Date(),
 };
 
-const toMeta = (product: Product, categories: Category[]): ProductWithMeta => {
+const toMeta = (
+  product: Product,
+  categories: Category[],
+  default_min_margin: number,
+): ProductWithMeta => {
   const category =
     categories.find((c) => c.id === product.category_id) ?? FALLBACK_CATEGORY;
   const margin_amount = product.sale_price - product.cost_price;
+  const margin = product.sale_price > 0 ? margin_amount / product.sale_price : 0;
+  const effective_min_margin = product.min_margin ?? default_min_margin;
+
   return {
     ...product,
     category,
     margin_amount,
-    margin: product.sale_price > 0 ? margin_amount / product.sale_price : 0,
+    margin,
     is_low_stock: product.stock <= product.min_stock,
+    is_low_margin: margin < effective_min_margin,
   };
 };
 
@@ -103,7 +112,8 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   },
 
   updateProduct: async (id, input) => {
-    await productService.update(id, input);
+    const changed_by = useAuthStore.getState().user?.uid ?? "unknown";
+    await productService.update(id, input, changed_by);
     set((s) => ({
       products: s.products.map((p) =>
         p.id === id ? { ...p, ...input, updated_at: new Date() } : p,
@@ -118,6 +128,8 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
   getFiltered: () => {
     const { products, categories, selected_category_id, search_query } = get();
+    const default_min_margin =
+      useAuthStore.getState().store?.default_min_margin ?? 0.2;
     return products
       .filter(
         (p) =>
@@ -126,13 +138,15 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
             p.name.toLowerCase().includes(search_query.toLowerCase()) ||
             p.barcode === search_query),
       )
-      .map((p) => toMeta(p, categories));
+      .map((p) => toMeta(p, categories, default_min_margin));
   },
 
   getLowStock: () => {
     const { products, categories } = get();
+    const default_min_margin =
+      useAuthStore.getState().store?.default_min_margin ?? 0.2;
     return products
       .filter((p) => p.stock <= p.min_stock)
-      .map((p) => toMeta(p, categories));
+      .map((p) => toMeta(p, categories, default_min_margin));
   },
 }));

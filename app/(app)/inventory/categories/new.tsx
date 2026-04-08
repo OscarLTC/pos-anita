@@ -22,7 +22,7 @@ export default function CategoryFormScreen() {
   }>();
   const isEdit = !!params.id;
 
-  const { store_id } = useAuthStore();
+  const { store } = useAuthStore();
   const { colors } = useThemeStore();
   const { addCategory, updateCategory } = useInventoryStore();
 
@@ -33,14 +33,15 @@ export default function CategoryFormScreen() {
   const s = useMemo(() => makeStyles(colors), [colors]);
 
   const handleSave = async () => {
+    if (!store?.id) return Alert.alert("Error", "Sesión inválida. Vuelve a iniciar sesión.");
     if (!name.trim()) return Alert.alert("Falta el nombre de la categoría");
 
     setIsLoading(true);
     try {
-      if (isEdit) {
-        await updateCategory(params.id!, { name: name.trim(), icon });
+      if (isEdit && params.id) {
+        await updateCategory(params.id, { name: name.trim(), icon });
       } else {
-        await addCategory(store_id!, { name: name.trim(), icon });
+        await addCategory(store.id, { name: name.trim(), icon });
       }
       router.back();
     } catch {

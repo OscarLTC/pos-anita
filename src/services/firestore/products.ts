@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 import type { Product, CreateProductInput, UpdateProductInput } from "@/types";
+import { priceHistoryService } from "./price-history";
 
 const col = collection(db, "products");
 
@@ -29,6 +30,7 @@ const fromFirestore = (id: string, data: DocumentData): Product => ({
   min_stock: data.min_stock,
   barcode: data.barcode,
   status: data.status,
+  min_margin: data.min_margin,
   created_at: data.created_at?.toDate() ?? new Date(),
   updated_at: data.updated_at?.toDate() ?? new Date(),
 });
@@ -62,11 +64,32 @@ export const productService = {
     return (await this.getById(ref.id))!;
   },
 
-  async update(id: string, input: UpdateProductInput): Promise<void> {
+  async update(id: string, input: UpdateProductInput, changed_by: string): Promise<void> {
+    const current = await this.getById(id);
+
     await updateDoc(doc(db, "products", id), {
       ...input,
       updated_at: serverTimestamp(),
     });
+
+    if (!current) return;
+
+    const cost_changed =
+      input.cost_price !== undefined && input.cost_price !== current.cost_price;
+    const sale_changed =
+      input.sale_price !== undefined && input.sale_price !== current.sale_price;
+
+    if (cost_changed || sale_changed) {
+      await priceHistoryService.create({
+        product_id: id,
+        store_id: current.store_id,
+        old_cost_price: current.cost_price,
+        new_cost_price: input.cost_price ?? current.cost_price,
+        old_sale_price: current.sale_price,
+        new_sale_price: input.sale_price ?? current.sale_price,
+        changed_by,
+      });
+    }
   },
 
   async updateStock(id: string, delta: number): Promise<void> {

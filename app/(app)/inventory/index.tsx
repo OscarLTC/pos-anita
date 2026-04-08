@@ -21,7 +21,7 @@ import { useThemeStore, type AppColors } from "@/theme";
 
 export default function InventoryScreen() {
   const router = useRouter();
-  const { store_id } = useAuthStore();
+  const { store } = useAuthStore();
   const { colors } = useThemeStore();
   const {
     categories,
@@ -106,12 +106,12 @@ export default function InventoryScreen() {
   };
 
   useEffect(() => {
-    if (store_id) loadInventory(store_id);
-  }, [store_id]);
+    if (store?.id) loadInventory(store?.id);
+  }, [store?.id]);
 
   const onRefresh = useCallback(() => {
-    if (store_id) loadInventory(store_id);
-  }, [store_id]);
+    if (store?.id) loadInventory(store?.id);
+  }, [store?.id]);
 
   const filtered = getFiltered();
   const low_stock = getLowStock();

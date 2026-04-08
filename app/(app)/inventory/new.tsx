@@ -30,7 +30,7 @@ export default function ProductFormScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!params.id;
 
-  const { store_id } = useAuthStore();
+  const { store } = useAuthStore();
   const { colors } = useThemeStore();
   const { categories, products, addProduct, updateProduct } = useInventoryStore();
 
@@ -55,15 +55,17 @@ export default function ProductFormScreen() {
 
   const s = useMemo(() => makeStyles(colors), [colors]);
 
-  const margin = (() => {
+  const margin_value = (() => {
     const cost = parseFloat(cost_price);
     const sale = parseFloat(sale_price);
     if (!cost || !sale || sale === 0) return null;
-    return (((sale - cost) / sale) * 100).toFixed(1);
+    return (sale - cost) / sale;
   })();
+  const min_margin = store?.default_min_margin ?? 0.2;
+  const is_low_margin = margin_value !== null && margin_value < min_margin;
 
   const handleSave = async () => {
-    if (!store_id) return Alert.alert("Error", "Sesión inválida. Vuelve a iniciar sesión.");
+    if (!store?.id) return Alert.alert("Error", "Sesión inválida. Vuelve a iniciar sesión.");
     if (!name.trim()) return Alert.alert("Falta el nombre del producto");
     if (!cost_price || !sale_price) return Alert.alert("Falta precio de costo o venta");
     if (!isEdit && !stock) return Alert.alert("Falta el stock inicial");
@@ -86,7 +88,7 @@ export default function ProductFormScreen() {
       if (isEdit && params.id) {
         await updateProduct(params.id, input);
       } else {
-        await addProduct(store_id, input);
+        await addProduct(store?.id, input);
       }
       router.back();
     } catch {
@@ -172,11 +174,11 @@ export default function ProductFormScreen() {
           </View>
         </View>
 
-        {margin !== null && (
-          <View style={s.margin_preview}>
-            <Text style={s.margin_text}>
-              Margen: {margin}% — S/ {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)}{" "}
-              por unidad
+        {margin_value !== null && (
+          <View style={[s.margin_preview, is_low_margin && s.margin_preview_low]}>
+            <Text style={[s.margin_text, is_low_margin && s.margin_text_low]}>
+              Margen: {(margin_value * 100).toFixed(1)}% — S/{" "}
+              {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)} por unidad
             </Text>
           </View>
         )}
@@ -314,10 +316,16 @@ const makeStyles = (c: AppColors) =>
       paddingVertical: 8,
       borderRadius: 8,
     },
+    margin_preview_low: {
+      backgroundColor: "#fdf0ef",
+    },
     margin_text: {
       fontSize: 13,
       color: c.margin_text,
       fontWeight: "500",
+    },
+    margin_text_low: {
+      color: "#c0392b",
     },
     save_button: {
       marginHorizontal: 16,
