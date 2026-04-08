@@ -45,16 +45,8 @@ export function ProductCard({ product, onPress, onEdit, onDelete }: Props) {
   );
 
   return (
-    <Swipeable
-      ref={swipeable_ref}
-      renderRightActions={renderRightActions}
-      overshootRight={false}
-    >
-      <TouchableOpacity
-        style={s.container}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
+    <Swipeable ref={swipeable_ref} renderRightActions={renderRightActions} overshootRight={false}>
+      <TouchableOpacity style={s.container} onPress={onPress} activeOpacity={0.7}>
         <View style={s.left}>
           <Text style={s.name} numberOfLines={1}>
             {product.name}
@@ -66,18 +58,8 @@ export function ProductCard({ product, onPress, onEdit, onDelete }: Props) {
               </Text>
             </View>
             <View style={s.stock_badge}>
-              <View
-                style={[
-                  s.stock_dot,
-                  product.is_low_stock && s.stock_dot_low,
-                ]}
-              />
-              <Text
-                style={[
-                  s.stock_text,
-                  product.is_low_stock && s.stock_text_low,
-                ]}
-              >
+              <View style={[s.stock_dot, product.is_low_stock && s.stock_dot_low]} />
+              <Text style={[s.stock_text, product.is_low_stock && s.stock_text_low]}>
                 {product.stock} {product.unit === "unit" ? "uds" : product.unit}
               </Text>
             </View>
@@ -86,8 +68,8 @@ export function ProductCard({ product, onPress, onEdit, onDelete }: Props) {
 
         <View style={s.right}>
           <Text style={s.price}>S/ {product.sale_price.toFixed(2)}</Text>
-          <Text style={s.margin}>
-            {(product.margin * 100).toFixed(0)}% margen
+          <Text style={[s.margin, product.is_low_margin && s.margin_low]}>
+            {(product.margin * 100).toFixed(1)}% margen
           </Text>
         </View>
       </TouchableOpacity>
@@ -164,6 +146,9 @@ const makeStyles = (c: AppColors) =>
     margin: {
       fontSize: 11,
       color: c.text4,
+    },
+    margin_low: {
+      color: "#c0392b",
     },
     actions: {
       flexDirection: "row",
