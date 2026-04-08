@@ -4,7 +4,8 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  getDocsFromServer,
+  getDoc,
+  getDocs,
   query,
   where,
   serverTimestamp,
@@ -27,7 +28,7 @@ const fromFirestore = (id: string, data: DocumentData): Category => ({
 export const categoryService = {
   async getAll(store_id: string): Promise<Category[]> {
     const q = query(col, where("store_id", "==", store_id));
-    const snap = await getDocsFromServer(q);
+    const snap = await getDocs(q);
     return snap.docs
       .map((d) => fromFirestore(d.id, d.data()))
       .sort((a, b) => a.order - b.order);
@@ -40,7 +41,8 @@ export const categoryService = {
       order,
       created_at: serverTimestamp(),
     });
-    return { id: ref.id, store_id, order, created_at: new Date(), ...input };
+    const snap = await getDoc(ref);
+    return fromFirestore(snap.id, snap.data()!);
   },
 
   async update(id: string, input: CreateCategoryInput): Promise<void> {

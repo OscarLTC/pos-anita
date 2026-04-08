@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -32,29 +32,26 @@ export default function ProductFormScreen() {
 
   const { store_id } = useAuthStore();
   const { colors } = useThemeStore();
-  const { categories, products, addProduct, updateProduct } =
-    useInventoryStore();
+  const { categories, products, addProduct, updateProduct } = useInventoryStore();
 
   const existing = isEdit ? products.find((p) => p.id === params.id) : null;
 
   const [name, setName] = useState(existing?.name ?? "");
-  const [category_id, setCategoryId] = useState(
-    existing?.category_id ?? categories[0]?.id ?? "",
-  );
+  const [category_id, setCategoryId] = useState(existing?.category_id ?? categories[0]?.id ?? "");
   const [unit, setUnit] = useState<product_unit>(existing?.unit ?? "unit");
-  const [cost_price, setCostPrice] = useState(
-    existing?.cost_price.toString() ?? "",
-  );
-  const [sale_price, setSalePrice] = useState(
-    existing?.sale_price.toString() ?? "",
-  );
+  const [cost_price, setCostPrice] = useState(existing?.cost_price.toString() ?? "");
+  const [sale_price, setSalePrice] = useState(existing?.sale_price.toString() ?? "");
   const [stock, setStock] = useState(existing?.stock.toString() ?? "");
-  const [min_stock, setMinStock] = useState(
-    existing?.min_stock.toString() ?? "",
-  );
+  const [min_stock, setMinStock] = useState(existing?.min_stock.toString() ?? "");
   const [barcode, setBarcode] = useState(existing?.barcode ?? "");
   const [scanner_visible, setScannerVisible] = useState(false);
   const [is_loading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!category_id && categories.length > 0) {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories]);
 
   const s = useMemo(() => makeStyles(colors), [colors]);
 
@@ -66,9 +63,9 @@ export default function ProductFormScreen() {
   })();
 
   const handleSave = async () => {
+    if (!store_id) return Alert.alert("Error", "Sesión inválida. Vuelve a iniciar sesión.");
     if (!name.trim()) return Alert.alert("Falta el nombre del producto");
-    if (!cost_price || !sale_price)
-      return Alert.alert("Falta precio de costo o venta");
+    if (!cost_price || !sale_price) return Alert.alert("Falta precio de costo o venta");
     if (!isEdit && !stock) return Alert.alert("Falta el stock inicial");
     if (!category_id) return Alert.alert("Selecciona una categoría");
 
@@ -86,10 +83,10 @@ export default function ProductFormScreen() {
 
     setIsLoading(true);
     try {
-      if (isEdit) {
-        await updateProduct(params.id!, input);
+      if (isEdit && params.id) {
+        await updateProduct(params.id, input);
       } else {
-        await addProduct(store_id!, input);
+        await addProduct(store_id, input);
       }
       router.back();
     } catch {
@@ -123,18 +120,10 @@ export default function ProductFormScreen() {
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[
-                    s.chip,
-                    category_id === cat.id && s.chip_active,
-                  ]}
+                  style={[s.chip, category_id === cat.id && s.chip_active]}
                   onPress={() => setCategoryId(cat.id)}
                 >
-                  <Text
-                    style={[
-                      s.chip_text,
-                      category_id === cat.id && s.chip_text_active,
-                    ]}
-                  >
+                  <Text style={[s.chip_text, category_id === cat.id && s.chip_text_active]}>
                     {cat.icon} {cat.name}
                   </Text>
                 </TouchableOpacity>
@@ -152,14 +141,7 @@ export default function ProductFormScreen() {
                 style={[s.chip, unit === u.value && s.chip_active]}
                 onPress={() => setUnit(u.value)}
               >
-                <Text
-                  style={[
-                    s.chip_text,
-                    unit === u.value && s.chip_text_active,
-                  ]}
-                >
-                  {u.label}
-                </Text>
+                <Text style={[s.chip_text, unit === u.value && s.chip_text_active]}>{u.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -193,18 +175,15 @@ export default function ProductFormScreen() {
         {margin !== null && (
           <View style={s.margin_preview}>
             <Text style={s.margin_text}>
-              Margen: {margin}% — S/{" "}
-              {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)} por
-              unidad
+              Margen: {margin}% — S/ {(parseFloat(sale_price) - parseFloat(cost_price)).toFixed(2)}{" "}
+              por unidad
             </Text>
           </View>
         )}
 
         <View style={s.row_2}>
           <View style={[s.section, { flex: 1 }]}>
-            <Text style={s.label}>
-              {isEdit ? "Stock" : "Stock inicial"}
-            </Text>
+            <Text style={s.label}>{isEdit ? "Stock" : "Stock inicial"}</Text>
             <TextInput
               style={s.input}
               placeholder="0"
@@ -238,10 +217,7 @@ export default function ProductFormScreen() {
               onChangeText={setBarcode}
               keyboardType="number-pad"
             />
-            <TouchableOpacity
-              style={s.scan_button}
-              onPress={() => setScannerVisible(true)}
-            >
+            <TouchableOpacity style={s.scan_button} onPress={() => setScannerVisible(true)}>
               <Ionicons name="barcode-outline" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>

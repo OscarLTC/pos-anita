@@ -32,8 +32,18 @@ interface InventoryState {
   getLowStock: () => ProductWithMeta[];
 }
 
+const FALLBACK_CATEGORY: Category = {
+  id: "",
+  store_id: "",
+  name: "Sin categoría",
+  icon: "📦",
+  order: 0,
+  created_at: new Date(),
+};
+
 const toMeta = (product: Product, categories: Category[]): ProductWithMeta => {
-  const category = categories.find((c) => c.id === product.category_id)!;
+  const category =
+    categories.find((c) => c.id === product.category_id) ?? FALLBACK_CATEGORY;
   const margin_amount = product.sale_price - product.cost_price;
   return {
     ...product,
