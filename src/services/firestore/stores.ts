@@ -15,6 +15,7 @@ const fromFirestore = (id: string, data: DocumentData): Store => ({
   owner_id: data.owner_id,
   currency: data.currency ?? "PEN",
   default_min_margin: data.default_min_margin ?? 0.2,
+  rounding_methods: data.rounding_methods ?? ["cash"],
   created_at: data.created_at?.toDate() ?? new Date(),
 });
 
@@ -47,6 +48,7 @@ export const storeService = {
       owner_id: userId,
       currency: "PEN",
       default_min_margin: 0.2,
+      rounding_methods: ["cash"],
       created_at: new Date(),
     };
   },

@@ -37,9 +37,10 @@ const PAYMENT_OPTIONS: {
 
 const formatQty = (qty: number, unit: string) => {
   if (unit === "unit") return String(qty);
-  // kg/l: muestra hasta 3 decimales sin ceros innecesarios
   return parseFloat(qty.toFixed(3)).toString();
 };
+
+const roundToCash = (amount: number) => Math.round(amount * 10) / 10;
 
 export default function NewSaleScreen() {
   const router = useRouter();
@@ -56,7 +57,6 @@ export default function NewSaleScreen() {
   const [show_cart, setShowCart] = useState(true);
   const [is_saving, setIsSaving] = useState(false);
   const [scanner_visible, setScannerVisible] = useState(false);
-  // Modal para productos por peso/volumen
   const [weight_modal, setWeightModal] = useState<{
     product: Product;
     current_qty?: number;
@@ -82,24 +82,30 @@ export default function NewSaleScreen() {
     [cart],
   );
 
+  const effective_total = useMemo(() => {
+    const applies = store?.rounding_methods?.includes(payment_type) ?? false;
+    return applies ? roundToCash(cart_total) : cart_total;
+  }, [cart_total, payment_type, store?.rounding_methods]);
+
+  const rounding_delta = parseFloat((effective_total - cart_total).toFixed(2));
+
   const getCartQty = useCallback(
     (product_id: string) => cart.find((i) => i.product.id === product_id)?.quantity ?? 0,
     [cart],
   );
 
-  // Productos por unidad: incrementa en 1
   const addUnitToCart = useCallback((product: Product) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) return prev.map((i) =>
-        i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
-      );
+      if (existing)
+        return prev.map((i) =>
+          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+        );
       return [...prev, { product, quantity: 1 }];
     });
     setShowCart(true);
   }, []);
 
-  // Productos por unidad: decrementa en 1
   const decreaseUnitQty = useCallback((product_id: string) => {
     setCart((prev) => {
       const item = prev.find((i) => i.product.id === product_id);
@@ -111,13 +117,10 @@ export default function NewSaleScreen() {
     });
   }, []);
 
-  // Productos por peso/volumen: establece cantidad exacta desde el modal
   const handleWeightConfirm = useCallback((product: Product, quantity: number) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) return prev.map((i) =>
-        i.product.id === product.id ? { ...i, quantity } : i,
-      );
+      if (existing) return prev.map((i) => (i.product.id === product.id ? { ...i, quantity } : i));
       return [...prev, { product, quantity }];
     });
     setWeightModal(null);
@@ -128,14 +131,17 @@ export default function NewSaleScreen() {
     setCart((prev) => prev.filter((i) => i.product.id !== product_id));
   }, []);
 
-  const handleProductPress = useCallback((product: Product) => {
-    if (product.unit !== "unit") {
-      const current_qty = getCartQty(product.id);
-      setWeightModal({ product, current_qty: current_qty || undefined });
-    } else {
-      addUnitToCart(product);
-    }
-  }, [getCartQty, addUnitToCart]);
+  const handleProductPress = useCallback(
+    (product: Product) => {
+      if (product.unit !== "unit") {
+        const current_qty = getCartQty(product.id);
+        setWeightModal({ product, current_qty: current_qty || undefined });
+      } else {
+        addUnitToCart(product);
+      }
+    },
+    [getCartQty, addUnitToCart],
+  );
 
   const handleBarcodeScanned = (code: string) => {
     setScannerVisible(false);
@@ -166,7 +172,7 @@ export default function NewSaleScreen() {
           unit_price: item.product.sale_price,
           subtotal: parseFloat((item.product.sale_price * item.quantity).toFixed(2)),
         })),
-        total: parseFloat(cart_total.toFixed(2)),
+        total: parseFloat(effective_total.toFixed(2)),
         payment_type,
         note: note.trim() || undefined,
       });
@@ -201,21 +207,20 @@ export default function NewSaleScreen() {
 
           <View style={s.product_controls}>
             {is_weight ? (
-              // Peso/volumen: botón que abre el modal de cantidad
               <TouchableOpacity
                 style={[s.weight_btn, qty > 0 && s.weight_btn_active]}
                 onPress={() => handleProductPress(item)}
               >
                 {qty > 0 ? (
                   <Text style={s.weight_btn_qty}>
-                    {formatQty(qty, item.unit)}{item.unit === "kg" ? "kg" : "L"}
+                    {formatQty(qty, item.unit)}
+                    {item.unit === "kg" ? "kg" : "L"}
                   </Text>
                 ) : (
                   <Ionicons name="scale-outline" size={18} color={colors.accent_text} />
                 )}
               </TouchableOpacity>
             ) : qty > 0 ? (
-              // Unidad en carrito: controles +/-
               <View style={s.qty_controls}>
                 <TouchableOpacity style={s.qty_btn} onPress={() => decreaseUnitQty(item.id)}>
                   <Ionicons name="remove" size={16} color={colors.text} />
@@ -226,7 +231,6 @@ export default function NewSaleScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              // Unidad sin agregar: botón +
               <TouchableOpacity style={s.add_btn} onPress={() => addUnitToCart(item)}>
                 <Ionicons name="add" size={20} color={colors.accent_text} />
               </TouchableOpacity>
@@ -332,7 +336,7 @@ export default function NewSaleScreen() {
                 </Text>
               </View>
               <View style={s.cart_header_right}>
-                <Text style={s.cart_total_preview}>S/ {cart_total.toFixed(2)}</Text>
+                <Text style={s.cart_total_preview}>S/ {effective_total.toFixed(2)}</Text>
                 <Ionicons
                   name={show_cart ? "chevron-down" : "chevron-up"}
                   size={16}
@@ -363,7 +367,6 @@ export default function NewSaleScreen() {
 
                         <View style={s.cart_item_right}>
                           {is_weight ? (
-                            // Toca el monto para editar la cantidad
                             <TouchableOpacity
                               onPress={() =>
                                 setWeightModal({
@@ -428,6 +431,21 @@ export default function NewSaleScreen() {
               </>
             )}
 
+            {/* Nota de redondeo (solo efectivo con diferencia) */}
+            {rounding_delta !== 0 && (
+              <View style={s.rounding_note}>
+                <Text style={s.rounding_text}>
+                  Redondeo efectivo: S/ {cart_total.toFixed(2)} →{" "}
+                  <Text style={s.rounding_amount}>S/ {effective_total.toFixed(2)}</Text>
+                  {"  "}
+                  <Text style={rounding_delta < 0 ? s.rounding_down : s.rounding_up}>
+                    ({rounding_delta > 0 ? "+" : ""}
+                    {rounding_delta.toFixed(2)})
+                  </Text>
+                </Text>
+              </View>
+            )}
+
             {/* Botón confirmar */}
             <TouchableOpacity
               style={[s.confirm_btn, is_saving && s.confirm_btn_disabled]}
@@ -438,7 +456,7 @@ export default function NewSaleScreen() {
                 <ActivityIndicator color={colors.accent_text} />
               ) : (
                 <Text style={s.confirm_btn_text}>
-                  Registrar venta · S/ {cart_total.toFixed(2)}
+                  Registrar venta · S/ {effective_total.toFixed(2)}
                 </Text>
               )}
             </TouchableOpacity>
@@ -510,7 +528,6 @@ const makeStyles = (c: AppColors) =>
     product_name: { fontSize: 15, fontWeight: "500", color: c.text },
     product_price: { fontSize: 13, color: c.text2 },
     product_controls: { marginLeft: 12 },
-    // Unidad: botones +/-
     qty_controls: { flexDirection: "row", alignItems: "center", gap: 2 },
     qty_btn: {
       width: 30,
@@ -535,7 +552,6 @@ const makeStyles = (c: AppColors) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    // Peso/volumen: botón que abre modal
     weight_btn: {
       minWidth: 56,
       height: 34,
@@ -557,7 +573,6 @@ const makeStyles = (c: AppColors) =>
     },
     empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 60 },
     empty_text: { fontSize: 15, color: c.text4 },
-    // Carrito
     cart_section: {
       borderTopWidth: 0.5,
       borderTopColor: c.border,
@@ -590,7 +605,6 @@ const makeStyles = (c: AppColors) =>
     cart_item_right: { flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 },
     cart_item_subtotal: { fontSize: 14, fontWeight: "600", color: c.text },
     editable_amount: {
-      // Indica visualmente que es tappable (underline sutil)
       textDecorationLine: "underline",
       textDecorationStyle: "dotted",
       color: c.text2,
@@ -641,4 +655,16 @@ const makeStyles = (c: AppColors) =>
     },
     confirm_btn_disabled: { opacity: 0.6 },
     confirm_btn_text: { color: c.accent_text, fontSize: 16, fontWeight: "600" },
+    rounding_note: {
+      marginHorizontal: 16,
+      marginBottom: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      backgroundColor: c.bg2,
+      borderRadius: 8,
+    },
+    rounding_text: { fontSize: 12, color: c.text3 },
+    rounding_amount: { fontWeight: "600", color: c.text },
+    rounding_down: { color: c.margin_text },
+    rounding_up: { color: c.low_stock_text },
   });
