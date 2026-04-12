@@ -1,0 +1,33 @@
+name: EAS Build (Android Preview)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Android Preview
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🚀 Build Android (preview)
+        run: eas build --platform android --profile preview --non-interactive
