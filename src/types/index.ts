@@ -10,6 +10,7 @@ export interface Store {
   owner_id: string;
   currency: string;
   default_min_margin: number;
+  rounding_methods: PaymentType[];
   created_at: Date;
 }
 
@@ -71,4 +72,53 @@ export type UpdateProductInput = Partial<CreateProductInput>;
 
 export type CreatePriceHistoryInput = Omit<PriceHistory, "id" | "changed_at">;
 
-export type UpdateStoreInput = Partial<Pick<Store, "name" | "currency" | "default_min_margin">>;
+export type UpdateStoreInput = Partial<Pick<Store, "name" | "currency" | "default_min_margin" | "rounding_methods">>;
+
+
+export type PaymentType = "cash" | "yape" | "plin" | "card";
+export type SaleStatus = "pending" | "completed" | "cancelled";
+export type RegisterStatus = "open" | "closed";
+
+export interface SaleItem {
+  product_id: string;
+  product_name: string;
+  unit: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface Sale {
+  id: string;
+  store_id: string;
+  created_by: string;
+  items: SaleItem[];
+  total: number;
+  payment_type: PaymentType;
+  status: SaleStatus;
+  note?: string;
+  created_at: Date;
+  completed_at?: Date;
+}
+
+export interface CashRegister {
+  id: string;
+  store_id: string;
+  date: string;
+  total_sales: number;
+  total_cash: number;
+  total_yape: number;
+  total_plin: number;
+  total_card: number;
+  sales_count: number;
+  opened_at: Date;
+  closed_at?: Date;
+  status: RegisterStatus;
+}
+
+export type CreateSaleInput = {
+  items: SaleItem[];
+  total: number;
+  payment_type: PaymentType;
+  note?: string;
+};
