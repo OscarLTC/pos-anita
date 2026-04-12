@@ -1,43 +1,51 @@
-import { View, TouchableOpacity } from "react-native";
-import { Stack } from "expo-router";
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/theme";
 
 export default function AppLayout() {
-  const { logout } = useAuthStore();
-  const { isDark, colors, toggle } = useThemeStore();
+  const { colors } = useThemeStore();
 
   return (
-    <Stack
+    <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerShadowVisible: false,
-        headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: "500" },
-        headerTitle: "Inventario",
-        headerRight: () => (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 20,
-              paddingHorizontal: 8,
-            }}
-          >
-            <TouchableOpacity onPress={toggle} hitSlop={8}>
-              <Ionicons
-                name={isDark ? "sunny-outline" : "moon-outline"}
-                size={22}
-                color={colors.text}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={logout} hitSlop={8}>
-              <Ionicons name="log-out-outline" size={22} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-        ),
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.bg,
+          borderTopColor: colors.border,
+          borderTopWidth: 0.5,
+        },
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.text4,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
       }}
-    />
+    >
+      <Tabs.Screen
+        name="inventory"
+        options={{
+          title: "Inventario",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cube-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="sales"
+        options={{
+          title: "Ventas",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="receipt-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="register"
+        options={{
+          title: "Caja",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cash-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

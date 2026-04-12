@@ -9,38 +9,39 @@ import { useAuthStore } from "@/stores/auth.store";
 import { useThemeStore } from "@/theme";
 
 export default function RootLayout() {
-  const { user, setUser } = useAuthStore();
+  const { user, store, setUser, loadStore } = useAuthStore();
   const { isDark, colors } = useThemeStore();
   const router = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      if (firebaseUser) {
+        await loadStore(firebaseUser.uid);
+      }
     });
     return unsubscribe;
   }, []);
 
   useEffect(() => {
     if (user === undefined) return;
+    if (user && store === undefined) return;
 
     const inAuthGroup = segments[0] === "(auth)";
     const inAppGroup = segments[0] === "(app)";
 
     if (!user && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (user && !inAppGroup) {
+    } else if (user && store && !inAppGroup) {
       router.replace("/(app)/inventory");
     }
-  }, [user, segments]);
+  }, [user, store, segments]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar
-          style={isDark ? "light" : "dark"}
-          backgroundColor={colors.bg}
-        />
+        <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.bg} />
         <Slot />
       </SafeAreaProvider>
     </GestureHandlerRootView>

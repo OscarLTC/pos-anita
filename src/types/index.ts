@@ -1,11 +1,16 @@
-export type product_unit = "unit" | "kg" | "l";
-export type product_status = "active" | "archived";
+export type ProductUnit = "unit" | "kg" | "l";
+export type ProductStatus = "active" | "archived";
+
+export type product_unit = ProductUnit;
+export type product_status = ProductStatus;
 
 export interface Store {
   id: string;
   name: string;
   owner_id: string;
   currency: string;
+  default_min_margin: number;
+  rounding_methods: PaymentType[];
   created_at: Date;
 }
 
@@ -23,13 +28,14 @@ export interface Product {
   store_id: string;
   category_id: string;
   name: string;
-  unit: product_unit;
+  unit: ProductUnit;
   cost_price: number;
   sale_price: number;
   stock: number;
   min_stock: number;
   barcode?: string;
-  status: product_status;
+  status: ProductStatus;
+  min_margin?: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -39,6 +45,20 @@ export interface ProductWithMeta extends Product {
   margin: number;
   margin_amount: number;
   is_low_stock: boolean;
+  is_low_margin: boolean;
+}
+
+export interface PriceHistory {
+  id: string;
+  product_id: string;
+  store_id: string;
+  old_cost_price: number;
+  new_cost_price: number;
+  old_sale_price: number;
+  new_sale_price: number;
+  changed_by: string;
+  changed_at: Date;
+  note?: string;
 }
 
 export type CreateCategoryInput = Pick<Category, "name" | "icon">;
@@ -49,3 +69,56 @@ export type CreateProductInput = Omit<
 >;
 
 export type UpdateProductInput = Partial<CreateProductInput>;
+
+export type CreatePriceHistoryInput = Omit<PriceHistory, "id" | "changed_at">;
+
+export type UpdateStoreInput = Partial<Pick<Store, "name" | "currency" | "default_min_margin" | "rounding_methods">>;
+
+
+export type PaymentType = "cash" | "yape" | "plin" | "card";
+export type SaleStatus = "pending" | "completed" | "cancelled";
+export type RegisterStatus = "open" | "closed";
+
+export interface SaleItem {
+  product_id: string;
+  product_name: string;
+  unit: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface Sale {
+  id: string;
+  store_id: string;
+  created_by: string;
+  items: SaleItem[];
+  total: number;
+  payment_type: PaymentType;
+  status: SaleStatus;
+  note?: string;
+  created_at: Date;
+  completed_at?: Date;
+}
+
+export interface CashRegister {
+  id: string;
+  store_id: string;
+  date: string;
+  total_sales: number;
+  total_cash: number;
+  total_yape: number;
+  total_plin: number;
+  total_card: number;
+  sales_count: number;
+  opened_at: Date;
+  closed_at?: Date;
+  status: RegisterStatus;
+}
+
+export type CreateSaleInput = {
+  items: SaleItem[];
+  total: number;
+  payment_type: PaymentType;
+  note?: string;
+};
