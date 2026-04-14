@@ -82,12 +82,15 @@ export default function NewSaleScreen() {
     [cart],
   );
 
-  const effective_total = useMemo(() => {
-    const applies = store?.rounding_methods?.includes(payment_type) ?? false;
-    return applies ? roundToCash(cart_total) : cart_total;
-  }, [cart_total, payment_type, store?.rounding_methods]);
+  const applies_rounding = useMemo(
+    () => store?.rounding_methods?.includes(payment_type) ?? false,
+    [store?.rounding_methods, payment_type],
+  );
 
-  const rounding_delta = parseFloat((effective_total - cart_total).toFixed(2));
+  const effective_total = useMemo(() => {
+    if (!applies_rounding) return cart_total;
+    return cart.reduce((sum, i) => sum + roundToCash(i.product.sale_price * i.quantity), 0);
+  }, [applies_rounding, cart, cart_total]);
 
   const getCartQty = useCallback(
     (product_id: string) => cart.find((i) => i.product.id === product_id)?.quantity ?? 0,
@@ -164,14 +167,17 @@ export default function NewSaleScreen() {
     setIsSaving(true);
     try {
       await createSale(store.id, {
-        items: cart.map((item) => ({
-          product_id: item.product.id,
-          product_name: item.product.name,
-          unit: item.product.unit,
-          quantity: item.quantity,
-          unit_price: item.product.sale_price,
-          subtotal: parseFloat((item.product.sale_price * item.quantity).toFixed(2)),
-        })),
+        items: cart.map((item) => {
+          const raw = item.product.sale_price * item.quantity;
+          return {
+            product_id: item.product.id,
+            product_name: item.product.name,
+            unit: item.product.unit,
+            quantity: item.quantity,
+            unit_price: item.product.sale_price,
+            subtotal: parseFloat((applies_rounding ? roundToCash(raw) : raw).toFixed(2)),
+          };
+        }),
         total: parseFloat(effective_total.toFixed(2)),
         payment_type,
         note: note.trim() || undefined,
@@ -350,7 +356,8 @@ export default function NewSaleScreen() {
                 <ScrollView style={s.cart_items} nestedScrollEnabled>
                   {cart.map((item) => {
                     const is_weight = item.product.unit !== "unit";
-                    const subtotal = item.product.sale_price * item.quantity;
+                    const raw_subtotal = item.product.sale_price * item.quantity;
+                    const subtotal = applies_rounding ? roundToCash(raw_subtotal) : raw_subtotal;
 
                     return (
                       <View key={item.product.id} style={s.cart_item}>
@@ -376,12 +383,22 @@ export default function NewSaleScreen() {
                               }
                               hitSlop={8}
                             >
-                              <Text style={[s.cart_item_subtotal, s.editable_amount]}>
-                                S/ {subtotal.toFixed(2)}
-                              </Text>
+                              <View style={s.cart_item_subtotal_wrap}>
+                                <Text style={[s.cart_item_subtotal, s.editable_amount]}>
+                                  S/ {subtotal.toFixed(2)}
+                                </Text>
+                                {subtotal !== raw_subtotal && (
+                                  <Text style={s.cart_item_raw}>S/ {raw_subtotal.toFixed(2)}</Text>
+                                )}
+                              </View>
                             </TouchableOpacity>
                           ) : (
-                            <Text style={s.cart_item_subtotal}>S/ {subtotal.toFixed(2)}</Text>
+                            <View style={s.cart_item_subtotal_wrap}>
+                              <Text style={s.cart_item_subtotal}>S/ {subtotal.toFixed(2)}</Text>
+                              {subtotal !== raw_subtotal && (
+                                <Text style={s.cart_item_raw}>S/ {raw_subtotal.toFixed(2)}</Text>
+                              )}
+                            </View>
                           )}
                           <TouchableOpacity
                             onPress={() => removeFromCart(item.product.id)}
@@ -429,21 +446,6 @@ export default function NewSaleScreen() {
                   ))}
                 </View>
               </>
-            )}
-
-            {/* Nota de redondeo (solo efectivo con diferencia) */}
-            {rounding_delta !== 0 && (
-              <View style={s.rounding_note}>
-                <Text style={s.rounding_text}>
-                  Redondeo efectivo: S/ {cart_total.toFixed(2)} →{" "}
-                  <Text style={s.rounding_amount}>S/ {effective_total.toFixed(2)}</Text>
-                  {"  "}
-                  <Text style={rounding_delta < 0 ? s.rounding_down : s.rounding_up}>
-                    ({rounding_delta > 0 ? "+" : ""}
-                    {rounding_delta.toFixed(2)})
-                  </Text>
-                </Text>
-              </View>
             )}
 
             {/* Botón confirmar */}
@@ -603,7 +605,9 @@ const makeStyles = (c: AppColors) =>
     cart_item_name: { fontSize: 14, fontWeight: "500", color: c.text },
     cart_item_sub: { fontSize: 12, color: c.text3 },
     cart_item_right: { flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 },
+    cart_item_subtotal_wrap: { alignItems: "flex-end" },
     cart_item_subtotal: { fontSize: 14, fontWeight: "600", color: c.text },
+    cart_item_raw: { fontSize: 11, color: c.text4, textDecorationLine: "line-through" },
     editable_amount: {
       textDecorationLine: "underline",
       textDecorationStyle: "dotted",
@@ -655,16 +659,4 @@ const makeStyles = (c: AppColors) =>
     },
     confirm_btn_disabled: { opacity: 0.6 },
     confirm_btn_text: { color: c.accent_text, fontSize: 16, fontWeight: "600" },
-    rounding_note: {
-      marginHorizontal: 16,
-      marginBottom: 6,
-      paddingVertical: 6,
-      paddingHorizontal: 10,
-      backgroundColor: c.bg2,
-      borderRadius: 8,
-    },
-    rounding_text: { fontSize: 12, color: c.text3 },
-    rounding_amount: { fontWeight: "600", color: c.text },
-    rounding_down: { color: c.margin_text },
-    rounding_up: { color: c.low_stock_text },
   });
