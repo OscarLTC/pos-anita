@@ -7,9 +7,16 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "jest",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "format": "prettier --write ."
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -34,9 +41,11 @@
   },
   "devDependencies": {
     "@expo/config-types": "^55.0.5",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
     "eslint": "^8.57.0",
     "eslint-config-expo": "^8.0.0",
+    "jest-expo": "^55.0.16",
     "prettier": "^3.3.3",
     "typescript": "~5.9.2"
   },
