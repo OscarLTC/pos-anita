@@ -128,7 +128,7 @@ export default function RegisterScreen() {
           <Ionicons name="cash-outline" size={48} color={colors.text4} />
           <Text style={s.empty_title}>Sin ventas hoy</Text>
           <Text style={s.empty_sub}>Las ventas del día aparecerán aquí.</Text>
-          <TouchableOpacity style={s.new_sale_btn} onPress={() => router.push("/(app)/sales/new")}>
+          <TouchableOpacity style={s.new_sale_btn} onPress={() => router.push("/(app)/sales")}>
             <Ionicons name="add" size={18} color={colors.accent_text} />
             <Text style={s.new_sale_btn_text}>Nueva venta</Text>
           </TouchableOpacity>

@@ -36,7 +36,7 @@ export default function RootLayout() {
     if (!user && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (user && store && !inAppGroup) {
-      router.replace("/(app)/inventory");
+      router.replace("/(app)/sales");
     }
   }, [user, store, segments]);
 

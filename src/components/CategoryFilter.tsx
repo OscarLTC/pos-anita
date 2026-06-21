@@ -1,11 +1,6 @@
 import { useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  ScrollView,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
 import type { Category } from "@/types";
 import { useThemeStore, type AppColors } from "@/theme";
 
@@ -38,9 +33,7 @@ export function CategoryFilter({
         style={[s.chip, !selected_id && s.chip_active]}
         onPress={() => onSelect(null)}
       >
-        <Text style={[s.chip_text, !selected_id && s.chip_text_active]}>
-          Todos
-        </Text>
+        <Text style={[s.chip_text, !selected_id && s.chip_text_active]}>Todos</Text>
       </TouchableOpacity>
 
       {categories.map((cat) => (
@@ -51,12 +44,7 @@ export function CategoryFilter({
           onLongPress={() => onLongPressCategory(cat)}
           delayLongPress={400}
         >
-          <Text
-            style={[
-              s.chip_text,
-              selected_id === cat.id && s.chip_text_active,
-            ]}
-          >
+          <Text style={[s.chip_text, selected_id === cat.id && s.chip_text_active]}>
             {cat.icon} {cat.name}
           </Text>
         </TouchableOpacity>

@@ -1,8 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
-  FlatList,
   TextInput,
   TouchableOpacity,
   ScrollView,
@@ -14,15 +13,13 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useInventoryStore } from "@/stores/inventory.store";
+import { useCartStore, cartRawTotal } from "@/stores/cart.store";
 import { useSalesStore } from "@/stores/sales.store";
 import { useAuthStore } from "@/stores/auth.store";
-import { useThemeStore, type AppColors } from "@/theme";
-import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { WeightInputModal } from "@/components/WeightInputModal";
+import { soles, formatQty } from "@/lib/format";
+import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { PaymentType, Product } from "@/types";
-
-type CartItem = { product: Product; quantity: number };
 
 const PAYMENT_OPTIONS: {
   type: PaymentType;
@@ -35,139 +32,41 @@ const PAYMENT_OPTIONS: {
   { type: "card", label: "Tarjeta", icon: "card-outline" },
 ];
 
-const formatQty = (qty: number, unit: string) => {
-  if (unit === "unit") return String(qty);
-  return parseFloat(qty.toFixed(3)).toString();
-};
-
 const roundToCash = (amount: number) => Math.round(amount * 10) / 10;
 
-export default function NewSaleScreen() {
+export default function CheckoutScreen() {
   const router = useRouter();
   const { store } = useAuthStore();
-  const { colors } = useThemeStore();
-  const { products, categories } = useInventoryStore();
   const { createSale } = useSalesStore();
+  const items = useCartStore((s) => s.items);
+  const setWeight = useCartStore((s) => s.setWeight);
+  const remove = useCartStore((s) => s.remove);
+  const clear = useCartStore((s) => s.clear);
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [search_query, setSearchQuery] = useState("");
-  const [selected_category_id, setSelectedCategoryId] = useState<string | null>(null);
-  const [payment_type, setPaymentType] = useState<PaymentType>("cash");
+  const [paymentType, setPaymentType] = useState<PaymentType>("cash");
   const [note, setNote] = useState("");
-  const [show_cart, setShowCart] = useState(true);
-  const [is_saving, setIsSaving] = useState(false);
-  const [scanner_visible, setScannerVisible] = useState(false);
-  const [weight_modal, setWeightModal] = useState<{
-    product: Product;
-    current_qty?: number;
-  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [weightModal, setWeightModal] = useState<{ product: Product; qty: number } | null>(null);
 
-  const s = useMemo(() => makeStyles(colors), [colors]);
-
-  const filtered_products = useMemo(
+  const rawTotal = cartRawTotal(items);
+  const appliesRounding = useMemo(
+    () => store?.rounding_methods?.includes(paymentType) ?? false,
+    [store?.rounding_methods, paymentType],
+  );
+  const effectiveTotal = useMemo(
     () =>
-      products.filter(
-        (p) =>
-          p.status === "active" &&
-          (!selected_category_id || p.category_id === selected_category_id) &&
-          (!search_query ||
-            p.name.toLowerCase().includes(search_query.toLowerCase()) ||
-            p.barcode === search_query),
-      ),
-    [products, selected_category_id, search_query],
+      appliesRounding
+        ? items.reduce((sum, i) => sum + roundToCash(i.product.sale_price * i.quantity), 0)
+        : rawTotal,
+    [appliesRounding, items, rawTotal],
   );
-
-  const cart_total = useMemo(
-    () => cart.reduce((sum, i) => sum + i.product.sale_price * i.quantity, 0),
-    [cart],
-  );
-
-  const applies_rounding = useMemo(
-    () => store?.rounding_methods?.includes(payment_type) ?? false,
-    [store?.rounding_methods, payment_type],
-  );
-
-  const effective_total = useMemo(() => {
-    if (!applies_rounding) return cart_total;
-    return cart.reduce((sum, i) => sum + roundToCash(i.product.sale_price * i.quantity), 0);
-  }, [applies_rounding, cart, cart_total]);
-
-  const getCartQty = useCallback(
-    (product_id: string) => cart.find((i) => i.product.id === product_id)?.quantity ?? 0,
-    [cart],
-  );
-
-  const addUnitToCart = useCallback((product: Product) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (existing)
-        return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
-        );
-      return [...prev, { product, quantity: 1 }];
-    });
-    setShowCart(true);
-  }, []);
-
-  const decreaseUnitQty = useCallback((product_id: string) => {
-    setCart((prev) => {
-      const item = prev.find((i) => i.product.id === product_id);
-      if (!item) return prev;
-      if (item.quantity <= 1) return prev.filter((i) => i.product.id !== product_id);
-      return prev.map((i) =>
-        i.product.id === product_id ? { ...i, quantity: i.quantity - 1 } : i,
-      );
-    });
-  }, []);
-
-  const handleWeightConfirm = useCallback((product: Product, quantity: number) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) return prev.map((i) => (i.product.id === product.id ? { ...i, quantity } : i));
-      return [...prev, { product, quantity }];
-    });
-    setWeightModal(null);
-    setShowCart(true);
-  }, []);
-
-  const removeFromCart = useCallback((product_id: string) => {
-    setCart((prev) => prev.filter((i) => i.product.id !== product_id));
-  }, []);
-
-  const handleProductPress = useCallback(
-    (product: Product) => {
-      if (product.unit !== "unit") {
-        const current_qty = getCartQty(product.id);
-        setWeightModal({ product, current_qty: current_qty || undefined });
-      } else {
-        addUnitToCart(product);
-      }
-    },
-    [getCartQty, addUnitToCart],
-  );
-
-  const handleBarcodeScanned = (code: string) => {
-    setScannerVisible(false);
-    setTimeout(() => {
-      const match = products.find((p) => p.barcode === code && p.status === "active");
-      if (match) {
-        handleProductPress(match);
-        setSearchQuery("");
-      } else {
-        setSearchQuery(code);
-      }
-    }, 400);
-  };
 
   const handleSave = async () => {
-    if (!store?.id) return;
-    if (cart.length === 0)
-      return Alert.alert("Carrito vacío", "Agrega productos antes de registrar.");
-
+    if (!store?.id || items.length === 0) return;
     setIsSaving(true);
     try {
       await createSale(store.id, {
-        items: cart.map((item) => {
+        items: items.map((item) => {
           const raw = item.product.sale_price * item.quantity;
           return {
             product_id: item.product.id,
@@ -175,14 +74,15 @@ export default function NewSaleScreen() {
             unit: item.product.unit,
             quantity: item.quantity,
             unit_price: item.product.sale_price,
-            subtotal: parseFloat((applies_rounding ? roundToCash(raw) : raw).toFixed(2)),
+            subtotal: parseFloat((appliesRounding ? roundToCash(raw) : raw).toFixed(2)),
           };
         }),
-        total: parseFloat(effective_total.toFixed(2)),
-        payment_type,
+        total: parseFloat(effectiveTotal.toFixed(2)),
+        payment_type: paymentType,
         note: note.trim() || undefined,
       });
-      router.back();
+      clear();
+      router.replace("/(app)/sales");
     } catch {
       Alert.alert("Error", "No se pudo registrar la venta. Intenta de nuevo.");
     } finally {
@@ -190,473 +90,227 @@ export default function NewSaleScreen() {
     }
   };
 
-  const renderProduct = useCallback(
-    ({ item }: { item: Product }) => {
-      const qty = getCartQty(item.id);
-      const category = categories.find((c) => c.id === item.category_id);
-      const is_weight = item.unit !== "unit";
-
-      return (
-        <View style={s.product_row}>
-          <View style={s.product_info}>
-            {category && (
-              <Text style={s.product_category}>
-                {category.icon} {category.name}
-              </Text>
-            )}
-            <Text style={s.product_name}>{item.name}</Text>
-            <Text style={s.product_price}>
-              S/ {item.sale_price.toFixed(2)}
-              {is_weight ? ` / ${item.unit === "kg" ? "kg" : "L"}` : ""}
-            </Text>
-          </View>
-
-          <View style={s.product_controls}>
-            {is_weight ? (
-              <TouchableOpacity
-                style={[s.weight_btn, qty > 0 && s.weight_btn_active]}
-                onPress={() => handleProductPress(item)}
-              >
-                {qty > 0 ? (
-                  <Text style={s.weight_btn_qty}>
-                    {formatQty(qty, item.unit)}
-                    {item.unit === "kg" ? "kg" : "L"}
-                  </Text>
-                ) : (
-                  <Ionicons name="scale-outline" size={18} color={colors.accent_text} />
-                )}
-              </TouchableOpacity>
-            ) : qty > 0 ? (
-              <View style={s.qty_controls}>
-                <TouchableOpacity style={s.qty_btn} onPress={() => decreaseUnitQty(item.id)}>
-                  <Ionicons name="remove" size={16} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={s.qty_text}>{qty}</Text>
-                <TouchableOpacity style={s.qty_btn} onPress={() => addUnitToCart(item)}>
-                  <Ionicons name="add" size={16} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity style={s.add_btn} onPress={() => addUnitToCart(item)}>
-                <Ionicons name="add" size={20} color={colors.accent_text} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      );
-    },
-    [cart, categories, colors, s],
-  );
+  if (items.length === 0) {
+    return (
+      <View style={s.emptyWrap}>
+        <Ionicons name="cart-outline" size={48} color={colors.inkSoft} />
+        <Text style={s.emptyText}>Tu carrito está vacío</Text>
+        <TouchableOpacity style={s.emptyBtn} onPress={() => router.replace("/(app)/sales")}>
+          <Text style={s.emptyBtnText}>Ir a vender</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={s.flex}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={90}
     >
-      <View style={s.container}>
-        {/* Buscador */}
-        <View style={s.search_row}>
-          <TextInput
-            style={s.search_input}
-            placeholder="Buscar producto..."
-            placeholderTextColor={colors.text4}
-            value={search_query}
-            onChangeText={setSearchQuery}
-            clearButtonMode="while-editing"
-          />
-          <TouchableOpacity style={s.scan_btn} onPress={() => setScannerVisible(true)}>
-            <Ionicons name="barcode-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
+      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+        {/* Items */}
+        <View style={s.section}>
+          {items.map((item) => {
+            const isWeight = item.product.unit !== "unit";
+            const raw = item.product.sale_price * item.quantity;
+            const subtotal = appliesRounding ? roundToCash(raw) : raw;
+
+            return (
+              <View key={item.product.id} style={s.itemRow}>
+                <View style={s.itemInfo}>
+                  <Text style={s.itemName} numberOfLines={1}>
+                    {item.product.name}
+                  </Text>
+                  <Text style={s.itemSub}>
+                    {isWeight
+                      ? `${formatQty(item.quantity, item.product.unit)} ${item.product.unit === "kg" ? "kg" : "L"} × ${soles(item.product.sale_price)}`
+                      : `${item.quantity} × ${soles(item.product.sale_price)}`}
+                  </Text>
+                </View>
+
+                <View style={s.itemRight}>
+                  {isWeight ? (
+                    <TouchableOpacity
+                      onPress={() => setWeightModal({ product: item.product, qty: item.quantity })}
+                      hitSlop={8}
+                    >
+                      <Text style={[s.itemSubtotal, s.editable]}>{soles(subtotal)}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Text style={s.itemSubtotal}>{soles(subtotal)}</Text>
+                  )}
+                  <TouchableOpacity onPress={() => remove(item.product.id)} hitSlop={8}>
+                    <Ionicons name="close-circle" size={20} color={colors.inkSoft} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })}
         </View>
 
-        <BarcodeScannerModal
-          visible={scanner_visible}
-          onScanned={handleBarcodeScanned}
-          onClose={() => setScannerVisible(false)}
+        {/* Nota */}
+        <TextInput
+          style={s.note}
+          placeholder="Nota (opcional)"
+          placeholderTextColor={colors.inkSoft}
+          value={note}
+          onChangeText={setNote}
+          multiline
         />
 
-        <WeightInputModal
-          product={weight_modal?.product ?? null}
-          initial_quantity={weight_modal?.current_qty}
-          onConfirm={handleWeightConfirm}
-          onClose={() => setWeightModal(null)}
-        />
-
-        {/* Filtro de categorías */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={s.category_scroll}
-          contentContainerStyle={s.category_row}
-        >
-          <TouchableOpacity
-            style={[s.chip, !selected_category_id && s.chip_active]}
-            onPress={() => setSelectedCategoryId(null)}
-          >
-            <Text style={[s.chip_text, !selected_category_id && s.chip_text_active]}>Todos</Text>
-          </TouchableOpacity>
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[s.chip, selected_category_id === cat.id && s.chip_active]}
-              onPress={() => setSelectedCategoryId(selected_category_id === cat.id ? null : cat.id)}
-            >
-              <Text style={[s.chip_text, selected_category_id === cat.id && s.chip_text_active]}>
-                {cat.icon} {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Lista de productos */}
-        <FlatList
-          style={s.list}
-          data={filtered_products}
-          keyExtractor={(item) => item.id}
-          renderItem={renderProduct}
-          extraData={cart}
-          contentContainerStyle={filtered_products.length === 0 ? s.list_empty_wrap : undefined}
-          ListEmptyComponent={
-            <View style={s.empty}>
-              <Text style={s.empty_text}>
-                {search_query ? "Sin resultados" : "No hay productos disponibles"}
-              </Text>
-            </View>
-          }
-        />
-
-        {/* Carrito */}
-        {cart.length > 0 && (
-          <View style={s.cart_section}>
-            {/* Header del carrito */}
-            <TouchableOpacity
-              style={s.cart_header}
-              onPress={() => setShowCart((v) => !v)}
-              activeOpacity={0.7}
-            >
-              <View style={s.cart_header_left}>
-                <Ionicons name="cart-outline" size={18} color={colors.text} />
-                <Text style={s.cart_header_text}>
-                  Carrito · {cart.length} {cart.length === 1 ? "producto" : "productos"}
-                </Text>
-              </View>
-              <View style={s.cart_header_right}>
-                <Text style={s.cart_total_preview}>S/ {effective_total.toFixed(2)}</Text>
+        {/* Método de pago */}
+        <Text style={s.label}>Método de pago</Text>
+        <View style={s.payments}>
+          {PAYMENT_OPTIONS.map((opt) => {
+            const active = paymentType === opt.type;
+            return (
+              <TouchableOpacity
+                key={opt.type}
+                style={[s.payChip, active && s.payChipActive]}
+                onPress={() => setPaymentType(opt.type)}
+                activeOpacity={0.8}
+              >
                 <Ionicons
-                  name={show_cart ? "chevron-down" : "chevron-up"}
+                  name={opt.icon}
                   size={16}
-                  color={colors.text3}
+                  color={active ? colors.primaryInk : colors.inkMid}
                 />
-              </View>
-            </TouchableOpacity>
+                <Text style={[s.payChipText, active && s.payChipTextActive]}>{opt.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
 
-            {show_cart && (
-              <>
-                <ScrollView style={s.cart_items} nestedScrollEnabled>
-                  {cart.map((item) => {
-                    const is_weight = item.product.unit !== "unit";
-                    const raw_subtotal = item.product.sale_price * item.quantity;
-                    const subtotal = applies_rounding ? roundToCash(raw_subtotal) : raw_subtotal;
-
-                    return (
-                      <View key={item.product.id} style={s.cart_item}>
-                        <View style={s.cart_item_info}>
-                          <Text style={s.cart_item_name} numberOfLines={1}>
-                            {item.product.name}
-                          </Text>
-                          <Text style={s.cart_item_sub}>
-                            {is_weight
-                              ? `${formatQty(item.quantity, item.product.unit)} ${item.product.unit === "kg" ? "kg" : "L"} × S/ ${item.product.sale_price.toFixed(2)}`
-                              : `${item.quantity} × S/ ${item.product.sale_price.toFixed(2)}`}
-                          </Text>
-                        </View>
-
-                        <View style={s.cart_item_right}>
-                          {is_weight ? (
-                            <TouchableOpacity
-                              onPress={() =>
-                                setWeightModal({
-                                  product: item.product,
-                                  current_qty: item.quantity,
-                                })
-                              }
-                              hitSlop={8}
-                            >
-                              <View style={s.cart_item_subtotal_wrap}>
-                                <Text style={[s.cart_item_subtotal, s.editable_amount]}>
-                                  S/ {subtotal.toFixed(2)}
-                                </Text>
-                                {subtotal !== raw_subtotal && (
-                                  <Text style={s.cart_item_raw}>S/ {raw_subtotal.toFixed(2)}</Text>
-                                )}
-                              </View>
-                            </TouchableOpacity>
-                          ) : (
-                            <View style={s.cart_item_subtotal_wrap}>
-                              <Text style={s.cart_item_subtotal}>S/ {subtotal.toFixed(2)}</Text>
-                              {subtotal !== raw_subtotal && (
-                                <Text style={s.cart_item_raw}>S/ {raw_subtotal.toFixed(2)}</Text>
-                              )}
-                            </View>
-                          )}
-                          <TouchableOpacity
-                            onPress={() => removeFromCart(item.product.id)}
-                            hitSlop={8}
-                          >
-                            <Ionicons name="close-circle" size={18} color={colors.text4} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    );
-                  })}
-
-                  <TextInput
-                    style={s.note_input}
-                    placeholder="Nota (opcional)..."
-                    placeholderTextColor={colors.text4}
-                    value={note}
-                    onChangeText={setNote}
-                    multiline
-                  />
-                </ScrollView>
-
-                {/* Selector de pago */}
-                <View style={s.payment_row}>
-                  {PAYMENT_OPTIONS.map((opt) => (
-                    <TouchableOpacity
-                      key={opt.type}
-                      style={[s.payment_chip, payment_type === opt.type && s.payment_chip_active]}
-                      onPress={() => setPaymentType(opt.type)}
-                    >
-                      <Ionicons
-                        name={opt.icon}
-                        size={14}
-                        color={payment_type === opt.type ? colors.accent_text : colors.text3}
-                      />
-                      <Text
-                        style={[
-                          s.payment_chip_text,
-                          payment_type === opt.type && s.payment_chip_text_active,
-                        ]}
-                      >
-                        {opt.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Botón confirmar */}
-            <TouchableOpacity
-              style={[s.confirm_btn, is_saving && s.confirm_btn_disabled]}
-              onPress={handleSave}
-              disabled={is_saving}
-            >
-              {is_saving ? (
-                <ActivityIndicator color={colors.accent_text} />
-              ) : (
-                <Text style={s.confirm_btn_text}>
-                  Registrar venta · S/ {effective_total.toFixed(2)}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+      {/* Total + confirmar */}
+      <View style={s.footer}>
+        <View style={s.totalRow}>
+          <Text style={s.totalLabel}>Total</Text>
+          <Text style={s.totalValue}>{soles(effectiveTotal)}</Text>
+        </View>
+        <TouchableOpacity
+          style={[s.confirmBtn, isSaving && s.confirmDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+          activeOpacity={0.85}
+        >
+          {isSaving ? (
+            <ActivityIndicator color={colors.primaryInk} />
+          ) : (
+            <Text style={s.confirmText}>Registrar venta</Text>
+          )}
+        </TouchableOpacity>
       </View>
+
+      <WeightInputModal
+        product={weightModal?.product ?? null}
+        initial_quantity={weightModal?.qty}
+        onConfirm={(product, quantity) => {
+          setWeight(product, quantity);
+          setWeightModal(null);
+        }}
+        onClose={() => setWeightModal(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
 
-const makeStyles = (c: AppColors) =>
-  StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg },
-    search_row: {
-      flexDirection: "row",
-      gap: 8,
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-    },
-    search_input: {
-      flex: 1,
-      height: 40,
-      backgroundColor: c.bg2,
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      fontSize: 15,
-      color: c.text,
-    },
-    scan_btn: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      backgroundColor: c.bg2,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    category_scroll: { flexGrow: 0 },
-    category_row: {
-      flexDirection: "row",
-      gap: 8,
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingBottom: 8,
-    },
-    chip: {
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 20,
-      borderWidth: 0.5,
-      borderColor: c.border,
-      backgroundColor: c.bg,
-    },
-    chip_active: { backgroundColor: c.accent, borderColor: c.accent },
-    chip_text: { fontSize: 13, color: c.text2 },
-    chip_text_active: { color: c.accent_text, fontWeight: "500" },
-    list: { flex: 1 },
-    list_empty_wrap: { flexGrow: 1 },
-    product_row: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderBottomWidth: 0.5,
-      borderBottomColor: c.border3,
-    },
-    product_info: { flex: 1, gap: 2 },
-    product_category: { fontSize: 11, color: c.text4 },
-    product_name: { fontSize: 15, fontWeight: "500", color: c.text },
-    product_price: { fontSize: 13, color: c.text2 },
-    product_controls: { marginLeft: 12 },
-    qty_controls: { flexDirection: "row", alignItems: "center", gap: 2 },
-    qty_btn: {
-      width: 30,
-      height: 30,
-      borderRadius: 8,
-      backgroundColor: c.bg2,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    qty_text: {
-      fontSize: 15,
-      fontWeight: "600",
-      color: c.text,
-      width: 28,
-      textAlign: "center",
-    },
-    add_btn: {
-      width: 34,
-      height: 34,
-      borderRadius: 10,
-      backgroundColor: c.accent,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    weight_btn: {
-      minWidth: 56,
-      height: 34,
-      paddingHorizontal: 10,
-      borderRadius: 10,
-      backgroundColor: c.accent,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    weight_btn_active: {
-      backgroundColor: c.bg2,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    weight_btn_qty: {
-      fontSize: 12,
-      fontWeight: "600",
-      color: c.text,
-    },
-    empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 60 },
-    empty_text: { fontSize: 15, color: c.text4 },
-    cart_section: {
-      borderTopWidth: 0.5,
-      borderTopColor: c.border,
-      backgroundColor: c.bg,
-      maxHeight: 380,
-    },
-    cart_header: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    cart_header_left: { flexDirection: "row", alignItems: "center", gap: 8 },
-    cart_header_text: { fontSize: 14, fontWeight: "600", color: c.text },
-    cart_header_right: { flexDirection: "row", alignItems: "center", gap: 8 },
-    cart_total_preview: { fontSize: 16, fontWeight: "700", color: c.text },
-    cart_items: { maxHeight: 160, borderTopWidth: 0.5, borderTopColor: c.border3 },
-    cart_item: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderBottomWidth: 0.5,
-      borderBottomColor: c.border3,
-    },
-    cart_item_info: { flex: 1, gap: 2 },
-    cart_item_name: { fontSize: 14, fontWeight: "500", color: c.text },
-    cart_item_sub: { fontSize: 12, color: c.text3 },
-    cart_item_right: { flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 },
-    cart_item_subtotal_wrap: { alignItems: "flex-end" },
-    cart_item_subtotal: { fontSize: 14, fontWeight: "600", color: c.text },
-    cart_item_raw: { fontSize: 11, color: c.text4, textDecorationLine: "line-through" },
-    editable_amount: {
-      textDecorationLine: "underline",
-      textDecorationStyle: "dotted",
-      color: c.text2,
-    },
-    note_input: {
-      marginHorizontal: 16,
-      marginVertical: 8,
-      fontSize: 13,
-      color: c.text,
-      borderWidth: 0.5,
-      borderColor: c.border,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      backgroundColor: c.bg4,
-      minHeight: 32,
-    },
-    payment_row: {
-      flexDirection: "row",
-      gap: 6,
-      paddingHorizontal: 16,
-      paddingBottom: 10,
-      paddingTop: 4,
-    },
-    payment_chip: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 4,
-      paddingVertical: 7,
-      borderRadius: 8,
-      borderWidth: 0.5,
-      borderColor: c.border,
-      backgroundColor: c.bg2,
-    },
-    payment_chip_active: { backgroundColor: c.accent, borderColor: c.accent },
-    payment_chip_text: { fontSize: 11, fontWeight: "500", color: c.text3 },
-    payment_chip_text_active: { color: c.accent_text },
-    confirm_btn: {
-      marginHorizontal: 16,
-      marginBottom: 12,
-      height: 50,
-      backgroundColor: c.accent,
-      borderRadius: 12,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    confirm_btn_disabled: { opacity: 0.6 },
-    confirm_btn_text: { color: c.accent_text, fontSize: 16, fontWeight: "600" },
-  });
+const s = StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.lg, gap: spacing.lg },
+  section: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  itemInfo: { flex: 1, gap: 2 },
+  itemName: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
+  itemSub: { ...typography.bodySm, color: colors.inkMid },
+  itemRight: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginLeft: spacing.sm },
+  itemSubtotal: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
+  editable: {
+    textDecorationLine: "underline",
+    textDecorationStyle: "dotted",
+    color: colors.inkMid,
+  },
+  note: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: fontSize.md,
+    color: colors.ink,
+    minHeight: 44,
+  },
+  label: { ...typography.bodySm, color: colors.inkMid },
+  payments: { flexDirection: "row", gap: spacing.sm },
+  payChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  payChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  payChipText: { ...typography.caption, color: colors.inkMid },
+  payChipTextActive: { color: colors.primaryInk, fontFamily: fontFamilies.display },
+  footer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadows.shadowLg,
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  totalLabel: { ...typography.body, color: colors.inkMid },
+  totalValue: { ...typography.title, color: colors.ink },
+  confirmBtn: {
+    height: 54,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  confirmDisabled: { opacity: 0.6 },
+  confirmText: { ...typography.display, fontSize: fontSize.lg, color: colors.primaryInk },
+  emptyWrap: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.md,
+  },
+  emptyText: { ...typography.body, color: colors.inkMid },
+  emptyBtn: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+  },
+  emptyBtnText: { ...typography.display, fontSize: fontSize.md, color: colors.primaryInk },
+});
