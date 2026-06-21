@@ -3,14 +3,16 @@ import { Slot, useRouter, useSegments } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { useAuthStore } from "@/stores/auth.store";
-import { useThemeStore } from "@/theme";
+import { fontAssets, useThemeStore } from "@/theme";
 
 export default function RootLayout() {
   const { user, store, setUser, loadStore } = useAuthStore();
   const { isDark, colors } = useThemeStore();
+  const [fontsLoaded] = useFonts(fontAssets);
   const router = useRouter();
   const segments = useSegments();
 
@@ -37,6 +39,8 @@ export default function RootLayout() {
       router.replace("/(app)/inventory");
     }
   }, [user, store, segments]);
+
+  if (!fontsLoaded) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

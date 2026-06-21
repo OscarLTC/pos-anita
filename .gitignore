@@ -46,3 +46,9 @@ yarn-error.*
 
 # claude
 .claude
+
+# firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

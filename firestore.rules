@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // El doc id de un store es el uid de su dueño.
+    function ownsStore(storeId) {
+      return signedIn() && request.auth.uid == storeId;
+    }
+
+    // El usuario es dueño del dato cuando store_id == su uid.
+    function ownsExisting() {
+      return signedIn() && resource.data.store_id == request.auth.uid;
+    }
+
+    function ownsIncoming() {
+      return signedIn() && request.resource.data.store_id == request.auth.uid;
+    }
+
+    // Cada usuario solo puede leer/escribir su propio store.
+    match /stores/{storeId} {
+      allow read, write: if ownsStore(storeId);
+    }
+
+    // Colecciones scopeadas por store_id.
+    match /products/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    match /categories/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    match /sales/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    match /price_history/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    match /cash_registers/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    // Todo lo demás queda denegado por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
