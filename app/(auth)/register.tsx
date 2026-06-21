@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,54 +18,43 @@ import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { authErrorMessage, isValidEmail } from "@/lib/auth-errors";
 import { colors, spacing, radius, typography, fontSize } from "@/theme";
 
-export default function LoginScreen() {
+const MIN_PASSWORD_LENGTH = 6;
+
+export default function RegisterScreen() {
   const router = useRouter();
-  const { login, resetPassword } = useAuthStore();
+  const { register } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password) {
+  const handleRegister = async () => {
+    if (!email.trim() || !password || !confirm) {
       setError("Completa todos los campos");
+      return;
+    }
+    if (!isValidEmail(email.trim())) {
+      setError("El correo no es válido");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`);
+      return;
+    }
+    if (password !== confirm) {
+      setError("Las contraseñas no coinciden");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      await login(email.trim(), password);
+      await register(email.trim(), password);
+      // El listener de auth en el root layout navega a la app automáticamente.
     } catch (err) {
-      setError(authErrorMessage(err, "Correo o contraseña incorrectos"));
-    } finally {
+      setError(authErrorMessage(err, "No pudimos crear la cuenta"));
       setLoading(false);
     }
-  };
-
-  const handleForgotPassword = async () => {
-    const trimmed = email.trim();
-    if (!trimmed) {
-      setError("Escribe tu correo para enviarte el enlace de recuperación");
-      return;
-    }
-    if (!isValidEmail(trimmed)) {
-      setError("El correo no es válido");
-      return;
-    }
-    setError(null);
-    try {
-      await resetPassword(trimmed);
-      Alert.alert(
-        "Revisa tu correo",
-        `Te enviamos un enlace para restablecer tu contraseña a ${trimmed}.`,
-      );
-    } catch (err) {
-      setError(authErrorMessage(err, "No pudimos enviar el correo de recuperación"));
-    }
-  };
-
-  const handleRegister = () => {
-    router.push("/(auth)/register");
   };
 
   return (
@@ -84,9 +72,9 @@ export default function LoginScreen() {
           <View style={s.logo}>
             <Ionicons name="basket" size={28} color={colors.primaryInk} />
           </View>
-          <Text style={s.title}>Tu bodega,{"\n"}ordenada.</Text>
+          <Text style={s.title}>Crea tu{"\n"}cuenta.</Text>
           <Text style={s.subtitle}>
-            Lleva ventas, inventario y fiados en un solo lugar. Adiós al cuaderno.
+            Empieza a ordenar tu bodega en minutos. Es gratis.
           </Text>
 
           {/* Google */}
@@ -119,40 +107,45 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              autoComplete="password"
-              onSubmitEditing={handleLogin}
+              autoComplete="password-new"
+            />
+            <TextInput
+              style={s.input}
+              placeholder="Confirmar contraseña"
+              placeholderTextColor={colors.inkSoft}
+              value={confirm}
+              onChangeText={setConfirm}
+              secureTextEntry
+              autoComplete="password-new"
+              onSubmitEditing={handleRegister}
               returnKeyType="go"
             />
-
-            <TouchableOpacity onPress={handleForgotPassword} style={s.forgotWrap}>
-              <Text style={s.forgotText}>¿Olvidaste tu contraseña?</Text>
-            </TouchableOpacity>
 
             {error && <Text style={s.error}>{error}</Text>}
 
             <TouchableOpacity
-              style={[s.loginBtn, loading && s.btnDisabled]}
-              onPress={handleLogin}
+              style={[s.primaryBtn, loading && s.btnDisabled]}
+              onPress={handleRegister}
               disabled={loading}
               activeOpacity={0.85}
             >
               {loading ? (
                 <ActivityIndicator color={colors.primaryInk} />
               ) : (
-                <Text style={s.loginText}>Iniciar sesión</Text>
+                <Text style={s.primaryText}>Crear cuenta</Text>
               )}
             </TouchableOpacity>
           </View>
 
-          {/* Registro */}
-          <TouchableOpacity style={s.registerRow} onPress={handleRegister}>
-            <Text style={s.registerMuted}>¿No tienes cuenta? </Text>
-            <Text style={s.registerLink}>Regístrate</Text>
+          {/* Volver a login */}
+          <TouchableOpacity style={s.loginRow} onPress={() => router.back()}>
+            <Text style={s.loginMuted}>¿Ya tienes cuenta? </Text>
+            <Text style={s.loginLink}>Inicia sesión</Text>
           </TouchableOpacity>
 
           {/* Footer */}
           <Text style={s.footer}>
-            Al continuar aceptas los <Text style={s.footerLink}>términos</Text> y la{" "}
+            Al crear una cuenta aceptas los <Text style={s.footerLink}>términos</Text> y la{" "}
             <Text style={s.footerLink}>política de privacidad</Text>
           </Text>
         </ScrollView>
@@ -226,20 +219,11 @@ const s = StyleSheet.create({
     color: colors.ink,
     backgroundColor: colors.surface,
   },
-  forgotWrap: {
-    alignSelf: "flex-end",
-    marginTop: -spacing.xs,
-  },
-  forgotText: {
-    ...typography.display,
-    fontSize: fontSize.sm,
-    color: colors.primary,
-  },
   error: {
     ...typography.bodySm,
     color: colors.danger,
   },
-  loginBtn: {
+  primaryBtn: {
     height: 54,
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
@@ -250,22 +234,22 @@ const s = StyleSheet.create({
   btnDisabled: {
     opacity: 0.6,
   },
-  loginText: {
+  primaryText: {
     ...typography.display,
     fontSize: fontSize.lg,
     color: colors.primaryInk,
   },
-  registerRow: {
+  loginRow: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: spacing.xl,
   },
-  registerMuted: {
+  loginMuted: {
     ...typography.body,
     fontSize: fontSize.sm,
     color: colors.inkMid,
   },
-  registerLink: {
+  loginLink: {
     ...typography.display,
     fontSize: fontSize.sm,
     color: colors.primary,
