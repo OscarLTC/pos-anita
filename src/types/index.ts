@@ -75,7 +75,20 @@ export type CreatePriceHistoryInput = Omit<PriceHistory, "id" | "changed_at">;
 export type UpdateStoreInput = Partial<Pick<Store, "name" | "currency" | "default_min_margin" | "rounding_methods">>;
 
 
-export type PaymentType = "cash" | "yape" | "plin" | "card";
+export type PaymentType = "cash" | "yape" | "plin" | "card" | "credit";
+
+export interface Client {
+  id: string;
+  store_id: string;
+  name: string;
+  nickname?: string;
+  phone?: string;
+  debt: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type CreateClientInput = Pick<Client, "name" | "nickname" | "phone">;
 export type SaleStatus = "pending" | "completed" | "cancelled";
 export type RegisterStatus = "open" | "closed";
 
@@ -97,6 +110,8 @@ export interface Sale {
   payment_type: PaymentType;
   status: SaleStatus;
   note?: string;
+  client_id?: string;
+  client_name?: string;
   created_at: Date;
   completed_at?: Date;
 }
@@ -121,4 +136,6 @@ export type CreateSaleInput = {
   total: number;
   payment_type: PaymentType;
   note?: string;
+  client_id?: string;
+  client_name?: string;
 };

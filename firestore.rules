@@ -57,6 +57,12 @@ service cloud.firestore {
       allow update: if ownsExisting() && ownsIncoming();
     }
 
+    match /clients/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+
     // Todo lo demás queda denegado por defecto.
     match /{document=**} {
       allow read, write: if false;

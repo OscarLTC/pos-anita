@@ -70,3 +70,12 @@ export const useCartStore = create<CartState>((set, get) => ({
 /** Total bruto (sin redondeo de pago). */
 export const cartRawTotal = (items: CartItem[]) =>
   items.reduce((sum, i) => sum + i.product.sale_price * i.quantity, 0);
+
+/** Redondeo a la decena de céntimo más cercana (efectivo sin monedas chicas). */
+export const roundToCash = (amount: number) => Math.round(amount * 10) / 10;
+
+/** Total efectivo aplicando (o no) redondeo por ítem según el método de pago. */
+export const cartTotal = (items: CartItem[], applyRounding: boolean) =>
+  applyRounding
+    ? items.reduce((sum, i) => sum + roundToCash(i.product.sale_price * i.quantity), 0)
+    : cartRawTotal(items);

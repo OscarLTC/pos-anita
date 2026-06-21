@@ -8,30 +8,46 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Alert,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
-import { useCartStore, cartRawTotal } from "@/stores/cart.store";
+import { useSalesStore } from "@/stores/sales.store";
+import { useClientsStore } from "@/stores/clients.store";
+import { useCartStore, cartRawTotal, cartTotal, roundToCash } from "@/stores/cart.store";
 import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { WeightInputModal } from "@/components/WeightInputModal";
 import { CartSheet } from "@/components/CartSheet";
+import { PaymentSheet } from "@/components/PaymentSheet";
+import { SuccessSheet } from "@/components/SuccessSheet";
+import { FiarSheet } from "@/components/FiarSheet";
+import { NewClientSheet } from "@/components/NewClientSheet";
+import type { PaymentMethod } from "@/config/payment-methods";
 import { soles, unitLabel } from "@/lib/format";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
-import type { Product } from "@/types";
+import type { Client, CreateClientInput, PaymentType, Product, SaleItem } from "@/types";
+
+type SuccessInfo =
+  | { kind: "sale"; total: number; label: string }
+  | { kind: "fiar"; total: number; clientName: string; phone?: string; newDebt: number };
 
 const AVATAR_BG = "rgba(242,199,68,0.20)"; // accent suave (amarillo)
 
 export default function VenderScreen() {
-  const router = useRouter();
   const { store } = useAuthStore();
   const { products, categories, loadInventory, is_loading } = useInventoryStore();
+  const createSale = useSalesStore((s) => s.createSale);
 
   const items = useCartStore((s) => s.items);
   const addUnit = useCartStore((s) => s.addUnit);
   const setWeight = useCartStore((s) => s.setWeight);
+  const clearCart = useCartStore((s) => s.clear);
+
+  const addClient = useClientsStore((s) => s.addClient);
+  const applyDebt = useClientsStore((s) => s.applyDebt);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -39,6 +55,15 @@ export default function VenderScreen() {
   const [scan, setScan] = useState<{ product: Product } | { notFound: string } | null>(null);
   const [cartVisible, setCartVisible] = useState(false);
   const [weightModal, setWeightModal] = useState<{ product: Product; qty?: number } | null>(null);
+  const [paymentVisible, setPaymentVisible] = useState(false);
+  const [checkoutTotal, setCheckoutTotal] = useState(0);
+  const [registering, setRegistering] = useState(false);
+  const [success, setSuccess] = useState<SuccessInfo | null>(null);
+  // Fiar
+  const [fiarVisible, setFiarVisible] = useState(false);
+  const [newClientVisible, setNewClientVisible] = useState(false);
+  const [registeringClientId, setRegisteringClientId] = useState<string | null>(null);
+  const [savingClient, setSavingClient] = useState(false);
 
   useEffect(() => {
     if (store?.id && products.length === 0) loadInventory(store.id);
@@ -58,7 +83,7 @@ export default function VenderScreen() {
   );
 
   const cartCount = items.length;
-  const cartTotal = cartRawTotal(items);
+  const cartAmount = cartRawTotal(items);
 
   const handleProductPress = (product: Product) => {
     if (product.unit !== "unit") {
@@ -104,6 +129,109 @@ export default function VenderScreen() {
           subtitle: `${soles(scan.product.sale_price)} · stock ${scan.product.stock}`,
         }
       : { status: "not_found" as const, code: scan.notFound };
+
+  // --- Flujo de cobro ---
+  const openPayment = () => {
+    setCheckoutTotal(cartRawTotal(items));
+    setCartVisible(false);
+    setTimeout(() => setPaymentVisible(true), 320);
+  };
+
+  const saleItems = (applies: boolean): SaleItem[] =>
+    items.map((item) => {
+      const raw = item.product.sale_price * item.quantity;
+      return {
+        product_id: item.product.id,
+        product_name: item.product.name,
+        unit: item.product.unit,
+        quantity: item.quantity,
+        unit_price: item.product.sale_price,
+        subtotal: parseFloat((applies ? roundToCash(raw) : raw).toFixed(2)),
+      };
+    });
+
+  const handleSelectMethod = async (method: PaymentMethod) => {
+    if (method.kind === "credit") {
+      setPaymentVisible(false);
+      setTimeout(() => setFiarVisible(true), 320);
+      return;
+    }
+    if (!store?.id || items.length === 0) return;
+
+    const paymentType = method.id as PaymentType;
+    const applies = store.rounding_methods?.includes(paymentType) ?? false;
+    const effective = cartTotal(items, applies);
+
+    setRegistering(true);
+    try {
+      await createSale(store.id, {
+        items: saleItems(applies),
+        total: parseFloat(effective.toFixed(2)),
+        payment_type: paymentType,
+      });
+      clearCart();
+      setPaymentVisible(false);
+      setTimeout(() => setSuccess({ kind: "sale", total: effective, label: method.label }), 320);
+    } catch {
+      Alert.alert("Error", "No se pudo registrar la venta. Intenta de nuevo.");
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  // Registra una venta a crédito (fiado) al cliente dado.
+  const doFiar = async (client: Client) => {
+    if (!store?.id || items.length === 0) return;
+    const total = cartRawTotal(items);
+    await createSale(store.id, {
+      items: saleItems(false),
+      total: parseFloat(total.toFixed(2)),
+      payment_type: "credit",
+      client_id: client.id,
+      client_name: client.name,
+    });
+    applyDebt(client.id, total);
+    clearCart();
+    setFiarVisible(false);
+    setNewClientVisible(false);
+    const newDebt = client.debt + total;
+    setTimeout(
+      () => setSuccess({ kind: "fiar", total, clientName: client.name, phone: client.phone, newDebt }),
+      320,
+    );
+  };
+
+  const handleSelectClient = async (client: Client) => {
+    setRegisteringClientId(client.id);
+    try {
+      await doFiar(client);
+    } catch {
+      Alert.alert("Error", "No se pudo registrar el fiado. Intenta de nuevo.");
+    } finally {
+      setRegisteringClientId(null);
+    }
+  };
+
+  const handleCreateClient = async (input: CreateClientInput) => {
+    if (!store?.id) return;
+    setSavingClient(true);
+    try {
+      const client = await addClient(store.id, input);
+      await doFiar(client);
+    } catch {
+      Alert.alert("Error", "No se pudo guardar el cliente. Intenta de nuevo.");
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  const sendWhatsApp = (info: Extract<SuccessInfo, { kind: "fiar" }>) => {
+    if (!info.phone) return;
+    const msg =
+      `Hola ${info.clientName}, te anoté ${soles(info.total)} en la libreta` +
+      `${store?.name ? ` de ${store.name}` : ""}. Tu deuda total es ${soles(info.newDebt)}. ¡Gracias!`;
+    Linking.openURL(`https://wa.me/${info.phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`);
+  };
 
   const renderProduct = ({ item }: { item: Product }) => {
     const category = categories.find((c) => c.id === item.category_id);
@@ -233,17 +361,61 @@ export default function VenderScreen() {
             <Text style={s.cartCountText}>{cartCount}</Text>
           </View>
           <Text style={s.cartBarLabel}>Ver carrito</Text>
-          <Text style={s.cartBarTotal}>{soles(cartTotal)}</Text>
+          <Text style={s.cartBarTotal}>{soles(cartAmount)}</Text>
         </TouchableOpacity>
       )}
 
       <CartSheet
         visible={cartVisible}
         onClose={() => setCartVisible(false)}
-        onCheckout={() => {
-          setCartVisible(false);
-          router.push("/(app)/sales/new");
+        onCheckout={openPayment}
+      />
+
+      <PaymentSheet
+        visible={paymentVisible}
+        total={checkoutTotal}
+        onClose={() => setPaymentVisible(false)}
+        onSelect={handleSelectMethod}
+        loading={registering}
+      />
+
+      <FiarSheet
+        visible={fiarVisible}
+        onClose={() => setFiarVisible(false)}
+        onSelectClient={handleSelectClient}
+        onNewClient={() => {
+          setFiarVisible(false);
+          setTimeout(() => setNewClientVisible(true), 320);
         }}
+        loadingClientId={registeringClientId}
+      />
+
+      <NewClientSheet
+        visible={newClientVisible}
+        onClose={() => setNewClientVisible(false)}
+        onCreate={handleCreateClient}
+        saving={savingClient}
+      />
+
+      <SuccessSheet
+        visible={!!success}
+        title={success?.kind === "fiar" ? "¡Anotado en la libreta!" : "¡Venta realizada!"}
+        subtitle={
+          success?.kind === "fiar" ? (
+            <Text>
+              Fiaste <Text style={s.successStrong}>{soles(success.total)}</Text> a{" "}
+              {success.clientName}
+            </Text>
+          ) : success ? (
+            <Text>
+              <Text style={s.successStrong}>{soles(success.total)}</Text> cobrado en {success.label}
+            </Text>
+          ) : null
+        }
+        onWhatsApp={
+          success?.kind === "fiar" && success.phone ? () => sendWhatsApp(success) : undefined
+        }
+        onDone={() => setSuccess(null)}
       />
 
       <BarcodeScannerModal
@@ -438,6 +610,7 @@ const s = StyleSheet.create({
     fontFamily: fontFamilies.body,
     color: colors.inkSoft,
   },
+  successStrong: { fontFamily: fontFamilies.display, color: colors.ink },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   empty: { alignItems: "center", justifyContent: "center", paddingTop: 60 },
   emptyText: { ...typography.body, color: colors.inkSoft },

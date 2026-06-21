@@ -54,18 +54,23 @@ export const useSalesStore = create<SalesState>((set, get) => ({
 
     set((s) => ({ sales: [sale, ...s.sales] }));
 
-    const { register } = get();
-    const key = `total_${input.payment_type}` as keyof CashRegister;
-    set((s) => ({
-      register: s.register
-        ? {
-            ...s.register,
-            total_sales: s.register.total_sales + input.total,
-            [key]: (s.register[key] as number) + input.total,
-            sales_count: s.register.sales_count + 1,
-          }
-        : null,
-    }));
+    // Las ventas a crédito (fiado) no mueven dinero: no afectan la caja del día.
+    const isCredit = input.payment_type === "credit";
+
+    if (!isCredit) {
+      const { register } = get();
+      const key = `total_${input.payment_type}` as keyof CashRegister;
+      set((s) => ({
+        register: s.register
+          ? {
+              ...s.register,
+              total_sales: s.register.total_sales + input.total,
+              [key]: (s.register[key] as number) + input.total,
+              sales_count: s.register.sales_count + 1,
+            }
+          : null,
+      }));
+    }
 
     for (const item of input.items) {
       useInventoryStore.setState((s) => ({
@@ -75,9 +80,11 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       }));
     }
 
-    cashRegisterService
-      .addSale(store_id, todayISO(), input.total, input.payment_type)
-      .catch((err) => console.error("Error actualizando caja:", err));
+    if (!isCredit) {
+      cashRegisterService
+        .addSale(store_id, todayISO(), input.total, input.payment_type)
+        .catch((err) => console.error("Error actualizando caja:", err));
+    }
 
     return sale;
   },

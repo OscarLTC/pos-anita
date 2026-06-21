@@ -27,6 +27,8 @@ const fromFirestore = (id: string, data: DocumentData): Sale => ({
   payment_type: data.payment_type,
   status: data.status,
   note: data.note ?? undefined,
+  client_id: data.client_id ?? undefined,
+  client_name: data.client_name ?? undefined,
   created_at: data.created_at?.toDate() ?? new Date(),
   completed_at: data.completed_at?.toDate() ?? undefined,
 });
@@ -49,6 +51,8 @@ export const saleService = {
       payment_type: input.payment_type,
       status: "completed",
       note: input.note ?? null,
+      client_id: input.client_id ?? null,
+      client_name: input.client_name ?? null,
       created_at: now,
       completed_at: now,
     });
@@ -57,6 +61,15 @@ export const saleService = {
       const productRef = doc(db, "products", item.product_id);
       batch.update(productRef, {
         stock: increment(-item.quantity),
+        updated_at: now,
+      });
+    }
+
+    // Venta a crédito (fiado): suma a la deuda del cliente de forma atómica.
+    if (input.payment_type === "credit" && input.client_id) {
+      const clientRef = doc(db, "clients", input.client_id);
+      batch.update(clientRef, {
+        debt: increment(input.total),
         updated_at: now,
       });
     }

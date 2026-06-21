@@ -5,6 +5,8 @@ import {
   Animated,
   Easing,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   type LayoutChangeEvent,
 } from "react-native";
@@ -81,9 +83,14 @@ export function BottomSheet({ visible, onClose, children }: Props) {
           </TouchableWithoutFeedback>
         </Animated.View>
 
-        <Animated.View onLayout={onLayout} style={{ transform: [{ translateY }] }}>
-          {children}
-        </Animated.View>
+        <KeyboardAvoidingView
+          style={styles.kav}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Animated.View onLayout={onLayout} style={{ transform: [{ translateY }] }}>
+            {children}
+          </Animated.View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -91,4 +98,5 @@ export function BottomSheet({ visible, onClose, children }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
+  kav: { justifyContent: "flex-end" },
 });

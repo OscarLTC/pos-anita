@@ -34,7 +34,6 @@ export default function SalesLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="new" options={{ title: "Carrito", headerRight: () => null }} />
       <Stack.Screen name="history" options={{ title: "Ventas" }} />
     </Stack>
   );

@@ -20,6 +20,7 @@ const PAYMENT_LABELS: Record<PaymentType, string> = {
   yape: "Yape",
   plin: "Plin",
   card: "Tarjeta",
+  credit: "Fiado",
 };
 
 const PAYMENT_ICONS: Record<PaymentType, keyof typeof Ionicons.glyphMap> = {
@@ -27,6 +28,7 @@ const PAYMENT_ICONS: Record<PaymentType, keyof typeof Ionicons.glyphMap> = {
   yape: "phone-portrait-outline",
   plin: "phone-portrait-outline",
   card: "card-outline",
+  credit: "book-outline",
 };
 
 const groupByDate = (sales: Sale[]) => {
