@@ -9,6 +9,7 @@ import type {
 } from "@/types";
 import { productService } from "@/services/firestore/products";
 import { categoryService } from "@/services/firestore/categories";
+import { stockMovementService } from "@/services/firestore/stock-movements";
 import { useAuthStore } from "@/stores/auth.store";
 
 interface InventoryState {
@@ -27,6 +28,7 @@ interface InventoryState {
   removeCategory: (id: string) => Promise<void>;
   addProduct: (store_id: string, input: CreateProductInput) => Promise<void>;
   updateProduct: (id: string, input: UpdateProductInput) => Promise<void>;
+  adjustStock: (product: Product, delta: number) => Promise<void>;
   archiveProduct: (id: string) => Promise<void>;
 
   getFiltered: () => ProductWithMeta[];
@@ -118,6 +120,22 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     set((s) => ({
       products: s.products.map((p) =>
         p.id === id ? { ...p, ...input, updated_at: new Date() } : p,
+      ),
+    }));
+  },
+
+  adjustStock: async (product, delta) => {
+    if (delta === 0) return;
+    await productService.updateStock(product.id, delta);
+    await stockMovementService.create(
+      product.store_id,
+      product.id,
+      delta > 0 ? "restock" : "adjustment",
+      delta,
+    );
+    set((s) => ({
+      products: s.products.map((p) =>
+        p.id === product.id ? { ...p, stock: p.stock + delta } : p,
       ),
     }));
   },

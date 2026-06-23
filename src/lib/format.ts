@@ -48,3 +48,17 @@ export function avatarColor(seed: string): string {
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
+
+const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+/** Fecha de un movimiento: "Hoy 11:33", "Ayer 17:20", "Lun 9:14". */
+export function movementTime(date: Date): string {
+  const time = date.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+  const now = new Date();
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (sameDay(date, now)) return `Hoy ${time}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(date, yesterday)) return `Ayer ${time}`;
+  return `${WEEKDAYS[date.getDay()]} ${time}`;
+}

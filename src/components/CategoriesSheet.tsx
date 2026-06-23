@@ -8,7 +8,7 @@ import {
   Alert,
   Dimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { CategoryFormSheet } from "@/components/CategoryFormSheet";
 import { useAuthStore } from "@/stores/auth.store";
@@ -107,10 +107,10 @@ export function CategoriesSheet({ visible, onClose }: Props) {
                 hitSlop={8}
                 style={s.iconBtn}
               >
-                <Ionicons name="pencil" size={18} color={colors.inkMid} />
+                <Feather name="edit-2" size={18} color={colors.inkMid} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleDelete(cat)} hitSlop={8} style={s.iconBtn}>
-                <Ionicons name="trash-outline" size={18} color={colors.inkSoft} />
+                <FontAwesome6 name="trash-alt" size={18} color={colors.inkSoft} />
               </TouchableOpacity>
             </View>
           ))}
@@ -120,7 +120,7 @@ export function CategoriesSheet({ visible, onClose }: Props) {
             onPress={() => setForm({ mode: "new" })}
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={20} color={colors.primary} />
+            <FontAwesome6 name="add" size={20} color={colors.primary} />
             <Text style={s.newBtnText}>Nueva categoría</Text>
           </TouchableOpacity>
         </ScrollView>

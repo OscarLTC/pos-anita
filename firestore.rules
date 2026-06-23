@@ -52,7 +52,10 @@ service cloud.firestore {
     }
 
     match /cash_registers/{id} {
-      allow read, delete: if ownsExisting();
+      // La caja del día se consulta antes de existir (primera venta): se permite
+      // leer un doc inexistente (devuelve null) además del propio.
+      allow read: if signedIn() && (resource == null || resource.data.store_id == request.auth.uid);
+      allow delete: if ownsExisting();
       allow create: if ownsIncoming();
       allow update: if ownsExisting() && ownsIncoming();
     }
@@ -61,6 +64,12 @@ service cloud.firestore {
       allow read, delete: if ownsExisting();
       allow create: if ownsIncoming();
       allow update: if ownsExisting() && ownsIncoming();
+    }
+
+    // Ledger de movimientos de stock: append-only (no update/delete).
+    match /stock_movements/{id} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming();
     }
 
     // Todo lo demás queda denegado por defecto.

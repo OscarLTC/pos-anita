@@ -10,13 +10,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { CategoriesSheet } from "@/components/CategoriesSheet";
 import { NewProductSheet } from "@/components/NewProductSheet";
+import { ProductDetailSheet } from "@/components/ProductDetailSheet";
 import { soles, formatQty } from "@/lib/format";
 import { withAlpha } from "@/lib/colors";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
@@ -25,7 +25,6 @@ import type { Product } from "@/types";
 const stockUnitWord = (unit: string) => (unit === "kg" ? "kg" : unit === "l" ? "L" : "unidades");
 
 export default function InventoryScreen() {
-  const router = useRouter();
   const { store } = useAuthStore();
   const { products, categories, loadInventory, is_loading } = useInventoryStore();
 
@@ -34,7 +33,8 @@ export default function InventoryScreen() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [categoriesVisible, setCategoriesVisible] = useState(false);
-  const [newProductVisible, setNewProductVisible] = useState(false);
+  const [detail, setDetail] = useState<Product | null>(null);
+  const [productForm, setProductForm] = useState<{ product: Product | null } | null>(null);
 
   useEffect(() => {
     if (store?.id) loadInventory(store.id);
@@ -68,7 +68,7 @@ export default function InventoryScreen() {
     setScannerVisible(false);
     setTimeout(() => {
       const match = active.find((p) => p.barcode === code);
-      if (match) router.push(`/(app)/inventory/${match.id}`);
+      if (match) setDetail(match);
       else setSearchQuery(code);
     }, 400);
   };
@@ -82,7 +82,7 @@ export default function InventoryScreen() {
       <TouchableOpacity
         style={[s.card, isLow && s.cardLow]}
         activeOpacity={0.7}
-        onPress={() => router.push(`/(app)/inventory/${item.id}`)}
+        onPress={() => setDetail(item)}
       >
         <View style={[s.avatar, { backgroundColor: withAlpha(swatch, 0.2) }]}>
           <Text style={s.avatarIcon}>{category?.icon ?? "📦"}</Text>
@@ -123,7 +123,7 @@ export default function InventoryScreen() {
         <TouchableOpacity style={s.iconBtn} onPress={() => setCategoriesVisible(true)}>
           <Ionicons name="grid-outline" size={20} color={colors.ink} />
         </TouchableOpacity>
-        <TouchableOpacity style={s.addBtn} onPress={() => setNewProductVisible(true)}>
+        <TouchableOpacity style={s.addBtn} onPress={() => setProductForm({ product: null })}>
           <Ionicons name="add" size={24} color={colors.primaryInk} />
         </TouchableOpacity>
       </View>
@@ -214,7 +214,22 @@ export default function InventoryScreen() {
       )}
 
       <CategoriesSheet visible={categoriesVisible} onClose={() => setCategoriesVisible(false)} />
-      <NewProductSheet visible={newProductVisible} onClose={() => setNewProductVisible(false)} />
+
+      <ProductDetailSheet
+        visible={detail != null}
+        product={detail}
+        onClose={() => setDetail(null)}
+        onEdit={(product) => {
+          setDetail(null);
+          setTimeout(() => setProductForm({ product }), 320);
+        }}
+      />
+
+      <NewProductSheet
+        visible={productForm != null}
+        product={productForm?.product ?? null}
+        onClose={() => setProductForm(null)}
+      />
       <BarcodeScannerModal
         visible={scannerVisible}
         onScanned={handleBarcodeScanned}

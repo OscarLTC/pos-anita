@@ -63,6 +63,15 @@ export const saleService = {
         stock: increment(-item.quantity),
         updated_at: now,
       });
+      // Registra el movimiento de salida en el ledger.
+      const moveRef = doc(collection(db, "stock_movements"));
+      batch.set(moveRef, {
+        store_id,
+        product_id: item.product_id,
+        type: "sale",
+        delta: -item.quantity,
+        created_at: now,
+      });
     }
 
     // Venta a crédito (fiado): suma a la deuda del cliente de forma atómica.

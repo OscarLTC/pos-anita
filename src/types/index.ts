@@ -117,6 +117,17 @@ export interface Sale {
   completed_at?: Date;
 }
 
+export type StockMovementType = "sale" | "restock" | "adjustment";
+
+export interface StockMovement {
+  id: string;
+  store_id: string;
+  product_id: string;
+  type: StockMovementType;
+  delta: number; // negativo = salida (venta), positivo = entrada (reposición)
+  created_at: Date;
+}
+
 export interface CashRegister {
   id: string;
   store_id: string;
