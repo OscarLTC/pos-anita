@@ -9,7 +9,7 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { useAuthStore } from "@/stores/auth.store";
 import { useInventoryStore } from "@/stores/inventory.store";
@@ -125,7 +125,7 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
                 {deleting ? (
                   <ActivityIndicator size="small" color={colors.danger} />
                 ) : (
-                  <Ionicons name="trash-outline" size={22} color={colors.danger} />
+                  <FontAwesome6 name="trash-alt" size={20} color={colors.danger} />
                 )}
               </TouchableOpacity>
               <TouchableOpacity onPress={onClose} hitSlop={8} disabled={busy}>
@@ -141,7 +141,7 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
                 <Text style={s.avatarIcon}>{category?.icon ?? "📦"}</Text>
               </View>
               <View style={s.editBadge}>
-                <Ionicons name="pencil" size={11} color={colors.primaryInk} />
+                <Feather name="edit-2" size={11} color={colors.primaryInk} />
               </View>
             </TouchableOpacity>
             <View style={s.productInfo}>
@@ -260,7 +260,7 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
               onPress={() => onEdit(p)}
               disabled={busy}
             >
-              <Ionicons name="pencil" size={16} color={colors.ink} />
+              <Feather name="edit-2" size={16} color={colors.ink} />
               <Text style={s.editText}>Editar</Text>
             </TouchableOpacity>
             <TouchableOpacity
