@@ -74,10 +74,8 @@ export const productService = {
 
     if (!current) return;
 
-    const cost_changed =
-      input.cost_price !== undefined && input.cost_price !== current.cost_price;
-    const sale_changed =
-      input.sale_price !== undefined && input.sale_price !== current.sale_price;
+    const cost_changed = input.cost_price !== undefined && input.cost_price !== current.cost_price;
+    const sale_changed = input.sale_price !== undefined && input.sale_price !== current.sale_price;
 
     if (cost_changed || sale_changed) {
       await priceHistoryService.create({

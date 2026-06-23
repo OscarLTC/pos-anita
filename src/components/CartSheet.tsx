@@ -6,7 +6,7 @@ import { useInventoryStore } from "@/stores/inventory.store";
 import { BottomSheet } from "@/components/BottomSheet";
 import { WeightInputModal } from "@/components/WeightInputModal";
 import { soles, unitLabel, unitShort, formatQty } from "@/lib/format";
-import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
+import { colors, spacing, radius, typography, fontSize, fontFamilies } from "@/theme";
 import type { Product } from "@/types";
 
 const AVATAR_BG = "rgba(242,199,68,0.20)";

@@ -34,11 +34,7 @@ export const priceHistoryService = {
   },
 
   async getByProduct(product_id: string, store_id: string): Promise<PriceHistory[]> {
-    const q = query(
-      col,
-      where("product_id", "==", product_id),
-      where("store_id", "==", store_id),
-    );
+    const q = query(col, where("product_id", "==", product_id), where("store_id", "==", store_id));
     const snap = await getDocs(q);
     return snap.docs
       .map((d) => fromFirestore(d.id, d.data()))

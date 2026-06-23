@@ -31,9 +31,7 @@ export const categoryService = {
   async getAll(store_id: string): Promise<Category[]> {
     const q = query(col, where("store_id", "==", store_id));
     const snap = await getDocs(q);
-    return snap.docs
-      .map((d) => fromFirestore(d.id, d.data()))
-      .sort((a, b) => a.order - b.order);
+    return snap.docs.map((d) => fromFirestore(d.id, d.data())).sort((a, b) => a.order - b.order);
   },
 
   async create(store_id: string, input: CreateCategoryInput, order: number): Promise<Category> {

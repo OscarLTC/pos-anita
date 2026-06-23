@@ -7,7 +7,10 @@ export function isValidEmail(email: string): boolean {
 }
 
 /** Traduce errores de Firebase Auth (y de la app) a mensajes en español para el usuario. */
-export function authErrorMessage(err: unknown, fallback = "Algo salió mal. Intenta de nuevo."): string {
+export function authErrorMessage(
+  err: unknown,
+  fallback = "Algo salió mal. Intenta de nuevo.",
+): string {
   if (err instanceof Error && err.message === GOOGLE_ACCOUNT_ONLY) {
     return 'Esta cuenta usa Google. Toca "Continuar con Google" para entrar.';
   }

@@ -50,8 +50,7 @@ const toMeta = (
   categories: Category[],
   default_min_margin: number,
 ): ProductWithMeta => {
-  const category =
-    categories.find((c) => c.id === product.category_id) ?? FALLBACK_CATEGORY;
+  const category = categories.find((c) => c.id === product.category_id) ?? FALLBACK_CATEGORY;
   const margin_amount = product.sale_price - product.cost_price;
   const margin = product.sale_price > 0 ? margin_amount / product.sale_price : 0;
   const effective_min_margin = product.min_margin ?? default_min_margin;
@@ -134,9 +133,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       delta,
     );
     set((s) => ({
-      products: s.products.map((p) =>
-        p.id === product.id ? { ...p, stock: p.stock + delta } : p,
-      ),
+      products: s.products.map((p) => (p.id === product.id ? { ...p, stock: p.stock + delta } : p)),
     }));
   },
 
@@ -147,8 +144,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
   getFiltered: () => {
     const { products, categories, selected_category_id, search_query } = get();
-    const default_min_margin =
-      useAuthStore.getState().store?.default_min_margin ?? 0.2;
+    const default_min_margin = useAuthStore.getState().store?.default_min_margin ?? 0.2;
     return products
       .filter(
         (p) =>
@@ -162,8 +158,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
   getLowStock: () => {
     const { products, categories } = get();
-    const default_min_margin =
-      useAuthStore.getState().store?.default_min_margin ?? 0.2;
+    const default_min_margin = useAuthStore.getState().store?.default_min_margin ?? 0.2;
     return products
       .filter((p) => p.stock <= p.min_stock)
       .map((p) => toMeta(p, categories, default_min_margin));

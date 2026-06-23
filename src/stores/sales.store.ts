@@ -20,7 +20,7 @@ interface SalesState {
   closeRegister: (store_id: string) => Promise<void>;
 }
 
-export const useSalesStore = create<SalesState>((set, get) => ({
+export const useSalesStore = create<SalesState>((set) => ({
   sales: [],
   register: null,
   is_loading: false,
@@ -58,7 +58,6 @@ export const useSalesStore = create<SalesState>((set, get) => ({
     const isCredit = input.payment_type === "credit";
 
     if (!isCredit) {
-      const { register } = get();
       const key = `total_${input.payment_type}` as keyof CashRegister;
       set((s) => ({
         register: s.register

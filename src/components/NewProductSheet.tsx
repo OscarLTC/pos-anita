@@ -110,8 +110,16 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
           style={s.scroll}
         >
           {/* Escanear código */}
-          <TouchableOpacity style={s.scanBox} onPress={() => setScannerVisible(true)} activeOpacity={0.8}>
-            <Ionicons name="barcode-outline" size={22} color={barcode ? colors.primary : colors.inkMid} />
+          <TouchableOpacity
+            style={s.scanBox}
+            onPress={() => setScannerVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="barcode-outline"
+              size={22}
+              color={barcode ? colors.primary : colors.inkMid}
+            />
             <View style={s.scanTextWrap}>
               <Text style={[s.scanTitle, barcode && { color: colors.primary }]}>
                 {barcode ? `Código ${barcode}` : "Escanear código"}
@@ -135,11 +143,21 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
 
           {/* Categoría */}
           <Text style={s.label}>Categoría</Text>
-          <TouchableOpacity style={s.select} onPress={() => setCatOpen((o) => !o)} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={s.select}
+            onPress={() => setCatOpen((o) => !o)}
+            activeOpacity={0.8}
+          >
             <Text style={[s.selectText, !selectedCat && { color: colors.inkSoft }]}>
-              {selectedCat ? `${selectedCat.icon}  ${selectedCat.name}` : "Selecciona una categoría"}
+              {selectedCat
+                ? `${selectedCat.icon}  ${selectedCat.name}`
+                : "Selecciona una categoría"}
             </Text>
-            <Ionicons name={catOpen ? "chevron-up" : "chevron-down"} size={18} color={colors.inkSoft} />
+            <Ionicons
+              name={catOpen ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={colors.inkSoft}
+            />
           </TouchableOpacity>
           {catOpen && (
             <View style={s.options}>
@@ -274,7 +292,12 @@ const s = StyleSheet.create({
     backgroundColor: colors.borderStrong,
     marginBottom: spacing.sm,
   },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.md,
+  },
   title: { ...typography.title, color: colors.ink },
   scanBox: {
     flexDirection: "row",
@@ -291,7 +314,13 @@ const s = StyleSheet.create({
   scanTitle: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
   scanSub: { ...typography.caption, color: colors.inkSoft },
   scroll: { maxHeight: SCROLL_MAX_HEIGHT },
-  label: { ...typography.bodySm, fontFamily: fontFamilies.display, color: colors.ink, marginTop: spacing.md, marginBottom: spacing.xs },
+  label: {
+    ...typography.bodySm,
+    fontFamily: fontFamilies.display,
+    color: colors.ink,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
   input: {
     height: 48,
     borderWidth: 1,

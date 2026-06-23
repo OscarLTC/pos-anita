@@ -11,11 +11,7 @@ export default function SalesLayout() {
   const headerRight = () => (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 8 }}>
       <TouchableOpacity onPress={toggle} hitSlop={8}>
-        <Ionicons
-          name={isDark ? "sunny-outline" : "moon-outline"}
-          size={22}
-          color={colors.text}
-        />
+        <Ionicons name={isDark ? "sunny-outline" : "moon-outline"} size={22} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity onPress={logout} hitSlop={8}>
         <Ionicons name="log-out-outline" size={22} color={colors.text} />

@@ -3,10 +3,7 @@ import { FloatingTabBar } from "@/components/FloatingTabBar";
 
 export default function AppLayout() {
   return (
-    <Tabs
-      screenOptions={{ headerShown: false }}
-      tabBar={(props) => <FloatingTabBar {...props} />}
-    >
+    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <FloatingTabBar {...props} />}>
       <Tabs.Screen name="sales" options={{ title: "Venta" }} />
       <Tabs.Screen name="inventory" options={{ title: "Inventario" }} />
       <Tabs.Screen name="fiados" options={{ title: "Fiados" }} />

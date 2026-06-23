@@ -177,9 +177,19 @@ const s = StyleSheet.create({
   },
   avatarText: { color: "#fff", fontFamily: fontFamilies.display, fontSize: fontSize.lg },
   previewInfo: { gap: 2 },
-  previewName: { ...typography.body, fontFamily: fontFamilies.display, color: colors.inkSoft, fontSize: fontSize.lg },
+  previewName: {
+    ...typography.body,
+    fontFamily: fontFamilies.display,
+    color: colors.inkSoft,
+    fontSize: fontSize.lg,
+  },
   previewSub: { ...typography.bodySm, color: colors.inkSoft },
-  label: { ...typography.bodySm, fontFamily: fontFamilies.display, color: colors.ink, marginTop: spacing.sm },
+  label: {
+    ...typography.bodySm,
+    fontFamily: fontFamilies.display,
+    color: colors.ink,
+    marginTop: spacing.sm,
+  },
   req: { color: colors.danger },
   hint: { fontFamily: fontFamilies.body, color: colors.inkSoft },
   input: {

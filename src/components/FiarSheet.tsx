@@ -24,7 +24,13 @@ interface Props {
   loadingClientId: string | null;
 }
 
-export function FiarSheet({ visible, onClose, onSelectClient, onNewClient, loadingClientId }: Props) {
+export function FiarSheet({
+  visible,
+  onClose,
+  onSelectClient,
+  onNewClient,
+  loadingClientId,
+}: Props) {
   const { store } = useAuthStore();
   const clients = useClientsStore((s) => s.clients);
   const loadClients = useClientsStore((s) => s.loadClients);
@@ -72,17 +78,26 @@ export function FiarSheet({ visible, onClose, onSelectClient, onNewClient, loadi
           />
         </View>
 
-        <TouchableOpacity style={s.newBtn} onPress={onNewClient} disabled={busy} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={s.newBtn}
+          onPress={onNewClient}
+          disabled={busy}
+          activeOpacity={0.8}
+        >
           <Ionicons name="add" size={20} color={colors.primary} />
           <Text style={s.newBtnText}>Cliente nuevo</Text>
         </TouchableOpacity>
 
-        <ScrollView style={s.list} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={s.list}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {filtered.map((client) => {
             const loading = loadingClientId === client.id;
             const sub = client.nickname
               ? `"${client.nickname}"${client.phone ? ` · ${client.phone}` : ""}`
-              : client.phone ?? "";
+              : (client.phone ?? "");
             return (
               <TouchableOpacity
                 key={client.id}
@@ -115,9 +130,7 @@ export function FiarSheet({ visible, onClose, onSelectClient, onNewClient, loadi
             );
           })}
           {filtered.length === 0 && (
-            <Text style={s.empty}>
-              {search ? "Sin resultados" : "Aún no tienes clientes"}
-            </Text>
+            <Text style={s.empty}>{search ? "Sin resultados" : "Aún no tienes clientes"}</Text>
           )}
         </ScrollView>
       </View>
@@ -203,5 +216,10 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(192,64,50,0.10)",
   },
   debtText: { ...typography.caption, color: colors.danger },
-  empty: { ...typography.body, color: colors.inkSoft, textAlign: "center", paddingVertical: spacing.xl },
+  empty: {
+    ...typography.body,
+    color: colors.inkSoft,
+    textAlign: "center",
+    paddingVertical: spacing.xl,
+  },
 });

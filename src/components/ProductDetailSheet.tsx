@@ -185,7 +185,11 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
               <Text style={s.minStock}>Aviso a stock {p.min_stock}</Text>
               <View style={s.quickRow}>
                 {QUICK_ADDS.map((q) => (
-                  <TouchableOpacity key={q} style={s.quickBtn} onPress={() => setStock((v) => v + q)}>
+                  <TouchableOpacity
+                    key={q}
+                    style={s.quickBtn}
+                    onPress={() => setStock((v) => v + q)}
+                  >
                     <Text style={s.quickText}>+{q}</Text>
                   </TouchableOpacity>
                 ))}
@@ -206,7 +210,9 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
                 </View>
                 <View style={s.priceItem}>
                   <Text style={s.priceCaption}>Margen</Text>
-                  <Text style={[s.marginValue, { color: lowMargin ? colors.danger : colors.success }]}>
+                  <Text
+                    style={[s.marginValue, { color: lowMargin ? colors.danger : colors.success }]}
+                  >
                     {Math.round(margin * 100)}%
                   </Text>
                 </View>
@@ -296,8 +302,19 @@ const s = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: spacing.lg },
   title: { ...typography.title, color: colors.ink },
-  productRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginVertical: spacing.md },
-  avatar: { width: 52, height: 52, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
+  productRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginVertical: spacing.md,
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   avatarIcon: { fontSize: 26 },
   editBadge: {
     position: "absolute",
@@ -332,7 +349,12 @@ const s = StyleSheet.create({
     marginBottom: spacing.md,
     ...shadows.shadow,
   },
-  cardLabel: { ...typography.caption, color: colors.inkSoft, letterSpacing: 0.8, marginBottom: spacing.md },
+  cardLabel: {
+    ...typography.caption,
+    color: colors.inkSoft,
+    letterSpacing: 0.8,
+    marginBottom: spacing.md,
+  },
   stepperRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   stepBtn: {
     width: 48,
@@ -344,7 +366,12 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   stepBtnDisabled: { opacity: 0.4 },
-  stockBig: { fontFamily: fontFamilies.display, fontSize: 44, color: colors.ink, letterSpacing: -1 },
+  stockBig: {
+    fontFamily: fontFamilies.display,
+    fontSize: 44,
+    color: colors.ink,
+    letterSpacing: -1,
+  },
   minStock: { ...typography.bodySm, color: colors.inkSoft, marginTop: spacing.sm },
   quickRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
   quickBtn: {
@@ -363,7 +390,12 @@ const s = StyleSheet.create({
   priceCaption: { ...typography.bodySm, color: colors.inkMid },
   priceValue: { fontFamily: fontFamilies.display, fontSize: fontSize.lg, color: colors.ink },
   marginValue: { fontFamily: fontFamilies.display, fontSize: fontSize.lg },
-  movRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.sm },
+  movRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   movIcon: {
     width: 32,
     height: 32,

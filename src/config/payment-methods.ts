@@ -24,9 +24,30 @@ export interface PaymentMethod {
  * se vuelva configurable solo cambia el origen de los datos, no las pantallas.
  */
 export const PAYMENT_METHODS: PaymentMethod[] = [
-  { id: "cash", label: "Efectivo", subtitle: "Caja chica", badge: "S/", color: "#0E5E3E", kind: "instant" },
-  { id: "yape", label: "Yape", subtitle: "BCP móvil", badge: "Y", color: "#742384", kind: "instant" },
-  { id: "plin", label: "Plin", subtitle: "Multibank", badge: "P", color: "#0FA9C0", kind: "instant" },
+  {
+    id: "cash",
+    label: "Efectivo",
+    subtitle: "Caja chica",
+    badge: "S/",
+    color: "#0E5E3E",
+    kind: "instant",
+  },
+  {
+    id: "yape",
+    label: "Yape",
+    subtitle: "BCP móvil",
+    badge: "Y",
+    color: "#742384",
+    kind: "instant",
+  },
+  {
+    id: "plin",
+    label: "Plin",
+    subtitle: "Multibank",
+    badge: "P",
+    color: "#0FA9C0",
+    kind: "instant",
+  },
   {
     id: "fiar",
     label: "Fiar",

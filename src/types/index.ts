@@ -73,8 +73,9 @@ export type UpdateProductInput = Partial<CreateProductInput>;
 
 export type CreatePriceHistoryInput = Omit<PriceHistory, "id" | "changed_at">;
 
-export type UpdateStoreInput = Partial<Pick<Store, "name" | "currency" | "default_min_margin" | "rounding_methods">>;
-
+export type UpdateStoreInput = Partial<
+  Pick<Store, "name" | "currency" | "default_min_margin" | "rounding_methods">
+>;
 
 export type PaymentType = "cash" | "yape" | "plin" | "card" | "credit";
 

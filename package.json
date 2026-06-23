@@ -42,6 +42,7 @@
     "@types/react": "~19.1.0",
     "eslint": "^8.57.0",
     "eslint-config-expo": "^8.0.0",
+    "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.3.3",
     "typescript": "~5.9.2"
   },

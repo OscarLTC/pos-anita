@@ -60,6 +60,7 @@ Para enviar el [`password-reset.html`](./password-reset.html) con el diseño Mer
    si usas la ruta custom, llama a tu Cloud Function en su lugar.
 
 ### Notas de la plantilla HTML
+
 - Estilos **en línea** y layout con **tablas** (los clientes de correo ignoran `<style>` y CSS externo).
 - Usa **fuente del sistema**: Bricolage Grotesque no se puede cargar de forma fiable en correo.
 - Colores tomados de los tokens Mercurio (`src/theme/tokens.ts`): `primary #0E5E3E`, `ink #0E1410`,

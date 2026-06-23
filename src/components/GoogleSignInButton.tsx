@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert } from "react-native";
+import {
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";

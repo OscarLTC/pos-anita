@@ -59,10 +59,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView
-        style={s.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
           contentContainerStyle={s.scroll}
           keyboardShouldPersistTaps="handled"
@@ -73,9 +70,7 @@ export default function RegisterScreen() {
             <Ionicons name="basket" size={28} color={colors.primaryInk} />
           </View>
           <Text style={s.title}>Crea tu{"\n"}cuenta.</Text>
-          <Text style={s.subtitle}>
-            Empieza a ordenar tu bodega en minutos. Es gratis.
-          </Text>
+          <Text style={s.subtitle}>Empieza a ordenar tu bodega en minutos. Es gratis.</Text>
 
           {/* Google */}
           <GoogleSignInButton onError={setError} />

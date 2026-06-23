@@ -34,11 +34,7 @@ const fromFirestore = (id: string, data: DocumentData): Sale => ({
 });
 
 export const saleService = {
-  async create(
-    store_id: string,
-    created_by: string,
-    input: CreateSaleInput,
-  ): Promise<Sale> {
+  async create(store_id: string, created_by: string, input: CreateSaleInput): Promise<Sale> {
     const batch = writeBatch(db);
     const saleRef = doc(col);
     const now = serverTimestamp();
