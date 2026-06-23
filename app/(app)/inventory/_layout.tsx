@@ -33,7 +33,8 @@ export default function InventoryLayout() {
         headerRight,
       }}
     >
-      <Stack.Screen name="index" options={{ title: "Inventario" }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="new" options={{ title: "Nuevo producto" }} />
     </Stack>
   );
 }

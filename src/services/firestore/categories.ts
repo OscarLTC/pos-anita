@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import type { Category, CreateCategoryInput } from "@/types";
 import { db } from "@/config/firebase.config";
+import { defaultCategoryColor } from "@/lib/colors";
 
 const col = collection(db, "categories");
 
@@ -21,6 +22,7 @@ const fromFirestore = (id: string, data: DocumentData): Category => ({
   store_id: data.store_id,
   name: data.name,
   icon: data.icon,
+  color: data.color ?? defaultCategoryColor(id),
   order: data.order,
   created_at: data.created_at?.toDate() ?? new Date(),
 });

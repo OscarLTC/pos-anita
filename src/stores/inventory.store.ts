@@ -38,6 +38,7 @@ const FALLBACK_CATEGORY: Category = {
   store_id: "",
   name: "Sin categoría",
   icon: "📦",
+  color: "#929C94",
   order: 0,
   created_at: new Date(),
 };

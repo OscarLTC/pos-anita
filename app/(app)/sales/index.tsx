@@ -29,6 +29,7 @@ import type { PaymentMethod } from "@/config/payment-methods";
 import { soles, unitLabel } from "@/lib/format";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { Client, CreateClientInput, PaymentType, Product, SaleItem } from "@/types";
+import { withAlpha } from "@/lib/colors";
 
 type SuccessInfo =
   | { kind: "sale"; total: number; label: string }
@@ -196,7 +197,8 @@ export default function VenderScreen() {
     setNewClientVisible(false);
     const newDebt = client.debt + total;
     setTimeout(
-      () => setSuccess({ kind: "fiar", total, clientName: client.name, phone: client.phone, newDebt }),
+      () =>
+        setSuccess({ kind: "fiar", total, clientName: client.name, phone: client.phone, newDebt }),
       320,
     );
   };
@@ -230,18 +232,21 @@ export default function VenderScreen() {
     const msg =
       `Hola ${info.clientName}, te anoté ${soles(info.total)} en la libreta` +
       `${store?.name ? ` de ${store.name}` : ""}. Tu deuda total es ${soles(info.newDebt)}. ¡Gracias!`;
-    Linking.openURL(`https://wa.me/${info.phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`);
+    Linking.openURL(
+      `https://wa.me/${info.phone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`,
+    );
   };
 
   const renderProduct = ({ item }: { item: Product }) => {
     const category = categories.find((c) => c.id === item.category_id);
+    const swatch = category?.color ?? "#929C94";
     const qty = items.find((i) => i.product.id === item.id)?.quantity ?? 0;
     const lowStock = item.stock <= item.min_stock;
     const isWeight = item.unit !== "unit";
 
     return (
       <TouchableOpacity style={s.card} activeOpacity={0.7} onPress={() => handleProductPress(item)}>
-        <View style={s.avatar}>
+        <View style={[s.avatar, { backgroundColor: withAlpha(swatch, 0.2) }]}>
           <Text style={s.avatarIcon}>{category?.icon ?? "📦"}</Text>
           {qty > 0 && (
             <View style={s.qtyBadge}>

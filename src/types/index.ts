@@ -19,6 +19,7 @@ export interface Category {
   store_id: string;
   name: string;
   icon: string;
+  color: string;
   order: number;
   created_at: Date;
 }
@@ -61,7 +62,7 @@ export interface PriceHistory {
   note?: string;
 }
 
-export type CreateCategoryInput = Pick<Category, "name" | "icon">;
+export type CreateCategoryInput = Pick<Category, "name" | "icon" | "color">;
 
 export type CreateProductInput = Omit<
   Product,
