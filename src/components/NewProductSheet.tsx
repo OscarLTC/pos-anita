@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
@@ -18,9 +17,6 @@ import { useInventoryStore } from "@/stores/inventory.store";
 import { withAlpha } from "@/lib/colors";
 import { colors, spacing, radius, typography, fontSize, fontFamilies } from "@/theme";
 import type { CreateProductInput, Product, ProductUnit } from "@/types";
-
-// El contenido scrollea hasta dejar el sheet en ~85% de la pantalla como máximo.
-const SCROLL_MAX_HEIGHT = Dimensions.get("window").height * 0.85 - 130;
 
 interface Props {
   visible: boolean;
@@ -277,6 +273,7 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
 
 const s = StyleSheet.create({
   sheet: {
+    flexShrink: 1,
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -313,7 +310,7 @@ const s = StyleSheet.create({
   scanTextWrap: { flex: 1, gap: 2 },
   scanTitle: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
   scanSub: { ...typography.caption, color: colors.inkSoft },
-  scroll: { maxHeight: SCROLL_MAX_HEIGHT },
+  scroll: { flexShrink: 1 },
   label: {
     ...typography.bodySm,
     fontFamily: fontFamilies.display,

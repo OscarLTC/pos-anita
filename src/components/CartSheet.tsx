@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartStore, cartRawTotal } from "@/stores/cart.store";
@@ -27,6 +27,11 @@ export function CartSheet({ visible, onClose, onCheckout }: Props) {
   const [weightEdit, setWeightEdit] = useState<{ product: Product; qty: number } | null>(null);
 
   const total = cartRawTotal(items);
+
+  // Si se retira el último ítem con el carrito abierto, cierra la hoja.
+  useEffect(() => {
+    if (visible && items.length === 0) onClose();
+  }, [visible, items.length]);
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
@@ -128,6 +133,7 @@ export function CartSheet({ visible, onClose, onCheckout }: Props) {
 
 const s = StyleSheet.create({
   sheet: {
+    flexShrink: 1,
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -150,7 +156,7 @@ const s = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   title: { ...typography.title, color: colors.ink },
-  list: { maxHeight: 360 },
+  list: { flexShrink: 1 },
   row: {
     flexDirection: "row",
     alignItems: "center",

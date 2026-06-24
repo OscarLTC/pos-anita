@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  Dimensions,
 } from "react-native";
 import { Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
@@ -16,8 +15,6 @@ import { useInventoryStore } from "@/stores/inventory.store";
 import { withAlpha } from "@/lib/colors";
 import { colors, spacing, radius, typography, fontSize, fontFamilies } from "@/theme";
 import type { Category, CreateCategoryInput } from "@/types";
-
-const LIST_MAX_HEIGHT = Dimensions.get("window").height * 0.6;
 
 interface Props {
   visible: boolean;
@@ -120,7 +117,7 @@ export function CategoriesSheet({ visible, onClose }: Props) {
             onPress={() => setForm({ mode: "new" })}
             activeOpacity={0.8}
           >
-            <FontAwesome6 name="add" size={20} color={colors.primary} />
+            <Ionicons name="add" size={20} color={colors.primary} />
             <Text style={s.newBtnText}>Nueva categoría</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -143,6 +140,7 @@ export function CategoriesSheet({ visible, onClose }: Props) {
 
 const s = StyleSheet.create({
   sheet: {
+    flexShrink: 1,
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -166,7 +164,7 @@ const s = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
-  list: { maxHeight: LIST_MAX_HEIGHT },
+  list: { flexShrink: 1 },
   row: {
     flexDirection: "row",
     alignItems: "center",

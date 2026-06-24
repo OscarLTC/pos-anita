@@ -140,6 +140,7 @@ export function FiarSheet({
 
 const s = StyleSheet.create({
   sheet: {
+    flexShrink: 1,
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -188,7 +189,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.chipBg,
   },
   newBtnText: { ...typography.body, fontFamily: fontFamilies.display, color: colors.primary },
-  list: { maxHeight: 380, marginTop: spacing.sm },
+  list: { flexShrink: 1, marginTop: spacing.sm },
   row: {
     flexDirection: "row",
     alignItems: "center",

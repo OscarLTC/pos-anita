@@ -8,17 +8,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Dimensions,
   type LayoutChangeEvent,
 } from "react-native";
 import { BlurView } from "expo-blur";
 
 const BLUR_INTENSITY = 10;
 const BACKDROP_COLOR = "rgba(14,20,16,0.28)";
+const SCREEN_HEIGHT = Dimensions.get("window").height;
+
+/** Altura máxima por defecto de la hoja: 70% de la pantalla. */
+const DEFAULT_MAX_HEIGHT_RATIO = 0.9;
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
+  /** Fracción de la altura de pantalla que la hoja puede ocupar (0–1). Por defecto 0.7. */
+  maxHeightRatio?: number;
 }
 
 /**
@@ -26,7 +33,12 @@ interface Props {
  * hace *slide* desde abajo (en vez de que todo el modal suba junto).
  * Se mantiene montado durante la animación de salida.
  */
-export function BottomSheet({ visible, onClose, children }: Props) {
+export function BottomSheet({
+  visible,
+  onClose,
+  children,
+  maxHeightRatio = DEFAULT_MAX_HEIGHT_RATIO,
+}: Props) {
   const [rendered, setRendered] = useState(visible);
   const [height, setHeight] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
@@ -87,7 +99,13 @@ export function BottomSheet({ visible, onClose, children }: Props) {
           style={styles.kav}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <Animated.View onLayout={onLayout} style={{ transform: [{ translateY }] }}>
+          <Animated.View
+            onLayout={onLayout}
+            style={{
+              maxHeight: SCREEN_HEIGHT * maxHeightRatio,
+              transform: [{ translateY }],
+            }}
+          >
             {children}
           </Animated.View>
         </KeyboardAvoidingView>

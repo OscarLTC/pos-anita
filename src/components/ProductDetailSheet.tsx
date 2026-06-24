@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Dimensions,
   Alert,
 } from "react-native";
 import { Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
@@ -19,7 +18,6 @@ import { withAlpha } from "@/lib/colors";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { Product, StockMovement, StockMovementType } from "@/types";
 
-const SCROLL_MAX_HEIGHT = Dimensions.get("window").height * 0.42;
 const QUICK_ADDS = [1, 6, 12, 24];
 
 const MOVEMENT_LABEL: Record<StockMovementType, string> = {
@@ -120,18 +118,9 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
 
           <View style={s.header}>
             <Text style={s.title}>Producto</Text>
-            <View style={s.headerActions}>
-              <TouchableOpacity onPress={handleDelete} hitSlop={8} disabled={busy}>
-                {deleting ? (
-                  <ActivityIndicator size="small" color={colors.danger} />
-                ) : (
-                  <FontAwesome6 name="trash-alt" size={20} color={colors.danger} />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onClose} hitSlop={8} disabled={busy}>
-                <Ionicons name="close" size={24} color={colors.ink} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={onClose} hitSlop={8} disabled={busy}>
+              <Ionicons name="close" size={24} color={colors.ink} />
+            </TouchableOpacity>
           </View>
 
           {/* Cabecera del producto */}
@@ -276,6 +265,23 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
               )}
             </TouchableOpacity>
           </View>
+
+          {/* Eliminar — acción destructiva terciaria, siempre visible */}
+          <TouchableOpacity
+            style={s.deleteBtn}
+            onPress={handleDelete}
+            disabled={busy}
+            activeOpacity={0.7}
+          >
+            {deleting ? (
+              <ActivityIndicator size="small" color={colors.danger} />
+            ) : (
+              <>
+                <FontAwesome6 name="trash-alt" size={16} color={colors.danger} />
+                <Text style={s.deleteText}>Eliminar producto</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       )}
     </BottomSheet>
@@ -284,6 +290,7 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
 
 const s = StyleSheet.create({
   sheet: {
+    flexShrink: 1,
     backgroundColor: colors.bg,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -300,7 +307,6 @@ const s = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: spacing.lg },
   title: { ...typography.title, color: colors.ink },
   productRow: {
     flexDirection: "row",
@@ -339,7 +345,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   chipText: { ...typography.caption, color: colors.inkMid },
-  scroll: { maxHeight: SCROLL_MAX_HEIGHT },
+  scroll: { flexShrink: 1 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -410,6 +416,15 @@ const s = StyleSheet.create({
   movTime: { ...typography.caption, color: colors.inkSoft },
   movDelta: { fontFamily: fontFamilies.display, fontSize: fontSize.md, color: colors.ink },
   emptyMov: { ...typography.bodySm, color: colors.inkSoft, paddingVertical: spacing.md },
+  deleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    height: 44,
+    marginTop: spacing.sm,
+  },
+  deleteText: { ...typography.body, fontFamily: fontFamilies.display, color: colors.danger },
   footer: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
   editBtn: {
     flex: 1,
