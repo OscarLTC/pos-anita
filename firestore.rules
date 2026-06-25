@@ -72,6 +72,12 @@ service cloud.firestore {
       allow create: if ownsIncoming();
     }
 
+    // Abonos de fiados: append-only (no update; delete permitido al dueño).
+    match /payments/{id} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming();
+    }
+
     // Todo lo demás queda denegado por defecto.
     match /{document=**} {
       allow read, write: if false;

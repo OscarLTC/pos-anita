@@ -91,6 +91,21 @@ export interface Client {
 }
 
 export type CreateClientInput = Pick<Client, "name" | "nickname" | "phone">;
+
+/** Métodos con los que se puede cobrar un abono de fiado. */
+export type AbonoMethod = "cash" | "yape" | "plin";
+
+export interface Payment {
+  id: string;
+  store_id: string;
+  client_id: string;
+  amount: number;
+  method: AbonoMethod;
+  created_at: Date;
+}
+
+export type CreatePaymentInput = Pick<Payment, "client_id" | "amount" | "method">;
+
 export type SaleStatus = "pending" | "completed" | "cancelled";
 export type RegisterStatus = "open" | "closed";
 

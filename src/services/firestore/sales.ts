@@ -85,6 +85,24 @@ export const saleService = {
     return fromFirestore(snap.id, snap.data()!);
   },
 
+  /**
+   * Todas las ventas a crédito (fiados) de la tienda, más recientes primero.
+   * Usa dos filtros de igualdad (sin orderBy) para no requerir índice compuesto;
+   * el orden se resuelve en memoria.
+   */
+  async getCredit(store_id: string): Promise<Sale[]> {
+    const q = query(
+      col,
+      where("store_id", "==", store_id),
+      where("payment_type", "==", "credit"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs
+      .map((d) => fromFirestore(d.id, d.data()))
+      .filter((s) => s.status === "completed")
+      .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+  },
+
   async getRecent(store_id: string, count = 50): Promise<Sale[]> {
     const q = query(
       col,

@@ -52,6 +52,16 @@ export const clientService = {
     return fromFirestore(snap.id, snap.data()!);
   },
 
+  /** Actualiza los datos editables del cliente (nombre, apodo, teléfono). */
+  async update(id: string, input: CreateClientInput): Promise<void> {
+    await updateDoc(doc(col, id), {
+      name: input.name,
+      nickname: input.nickname ?? null,
+      phone: input.phone ?? null,
+      updated_at: serverTimestamp(),
+    });
+  },
+
   /** Ajusta la deuda (positivo suma, negativo abona). */
   async adjustDebt(id: string, amount: number): Promise<void> {
     await updateDoc(doc(col, id), { debt: increment(amount), updated_at: serverTimestamp() });

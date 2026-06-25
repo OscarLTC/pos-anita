@@ -7,6 +7,7 @@ interface ClientsState {
   is_loading: boolean;
   loadClients: (store_id: string) => Promise<void>;
   addClient: (store_id: string, input: CreateClientInput) => Promise<Client>;
+  updateClient: (id: string, input: CreateClientInput) => Promise<void>;
   /** Refleja localmente un cambio de deuda ya persistido (positivo suma, negativo abona). */
   applyDebt: (client_id: string, amount: number) => void;
 }
@@ -32,6 +33,25 @@ export const useClientsStore = create<ClientsState>((set) => ({
     const client = await clientService.create(store_id, input);
     set((s) => ({ clients: [...s.clients, client].sort(sortByDebt) }));
     return client;
+  },
+
+  updateClient: async (id, input) => {
+    await clientService.update(id, input);
+    set((s) => ({
+      clients: s.clients
+        .map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                name: input.name,
+                nickname: input.nickname,
+                phone: input.phone,
+                updated_at: new Date(),
+              }
+            : c,
+        )
+        .sort(sortByDebt),
+    }));
   },
 
   applyDebt: (client_id, amount) =>

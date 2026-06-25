@@ -10,27 +10,30 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { colors, spacing, radius, typography, fontSize, fontFamilies } from "@/theme";
-import type { CreateClientInput } from "@/types";
+import type { Client, CreateClientInput } from "@/types";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   onCreate: (input: CreateClientInput) => void;
   saving: boolean;
+  /** Si se provee, el formulario abre en modo edición con los datos precargados. */
+  initial?: Client | null;
 }
 
-export function NewClientSheet({ visible, onClose, onCreate, saving }: Props) {
+export function NewClientSheet({ visible, onClose, onCreate, saving, initial }: Props) {
+  const editing = !!initial;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [nickname, setNickname] = useState("");
 
   useEffect(() => {
     if (visible) {
-      setName("");
-      setPhone("");
-      setNickname("");
+      setName(initial?.name ?? "");
+      setPhone(initial?.phone?.replace(/^\+51/, "") ?? "");
+      setNickname(initial?.nickname ?? "");
     }
-  }, [visible]);
+  }, [visible, initial?.id]);
 
   const canSave = name.trim().length > 0 && !saving;
 
@@ -50,7 +53,7 @@ export function NewClientSheet({ visible, onClose, onCreate, saving }: Props) {
         <View style={s.handle} />
 
         <View style={s.header}>
-          <Text style={s.title}>Nuevo cliente</Text>
+          <Text style={s.title}>{editing ? "Editar cliente" : "Nuevo cliente"}</Text>
           <TouchableOpacity onPress={onClose} hitSlop={8} disabled={saving}>
             <Ionicons name="close" size={24} color={colors.ink} />
           </TouchableOpacity>
@@ -128,7 +131,7 @@ export function NewClientSheet({ visible, onClose, onCreate, saving }: Props) {
             {saving ? (
               <ActivityIndicator color={colors.primaryInk} />
             ) : (
-              <Text style={s.saveText}>Guardar cliente</Text>
+              <Text style={s.saveText}>{editing ? "Guardar cambios" : "Guardar cliente"}</Text>
             )}
           </TouchableOpacity>
         </View>
