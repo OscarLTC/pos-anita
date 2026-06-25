@@ -5,6 +5,7 @@ import {
   updateDoc,
   getDocs,
   getDoc,
+  onSnapshot,
   query,
   where,
   orderBy,
@@ -45,6 +46,28 @@ export const productService = {
     );
     const snap = await getDocs(q);
     return snap.docs.map((d) => fromFirestore(d.id, d.data()));
+  },
+
+  /**
+   * Suscripción en tiempo real a los productos activos de una tienda.
+   * Devuelve la función para cancelar el listener.
+   */
+  subscribe(
+    store_id: string,
+    onChange: (products: Product[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void {
+    const q = query(
+      col,
+      where("store_id", "==", store_id),
+      where("status", "==", "active"),
+      orderBy("name"),
+    );
+    return onSnapshot(
+      q,
+      (snap) => onChange(snap.docs.map((d) => fromFirestore(d.id, d.data()))),
+      (error) => onError?.(error),
+    );
   },
 
   async getById(id: string): Promise<Product | null> {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "@/stores/inventory.store";
-import { useAuthStore } from "@/stores/auth.store";
 import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { CategoriesSheet } from "@/components/CategoriesSheet";
 import { NewProductSheet } from "@/components/NewProductSheet";
@@ -25,8 +24,7 @@ import type { Product } from "@/types";
 const stockUnitWord = (unit: string) => (unit === "kg" ? "kg" : unit === "l" ? "L" : "unidades");
 
 export default function InventoryScreen() {
-  const { store } = useAuthStore();
-  const { products, categories, loadInventory, is_loading } = useInventoryStore();
+  const { products, categories, is_loading } = useInventoryStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -35,10 +33,6 @@ export default function InventoryScreen() {
   const [categoriesVisible, setCategoriesVisible] = useState(false);
   const [detail, setDetail] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState<{ product: Product | null } | null>(null);
-
-  useEffect(() => {
-    if (store?.id) loadInventory(store.id);
-  }, [store?.id]);
 
   const active = useMemo(() => products.filter((p) => p.status !== "archived"), [products]);
 

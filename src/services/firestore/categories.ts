@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   where,
   serverTimestamp,
@@ -32,6 +33,26 @@ export const categoryService = {
     const q = query(col, where("store_id", "==", store_id));
     const snap = await getDocs(q);
     return snap.docs.map((d) => fromFirestore(d.id, d.data())).sort((a, b) => a.order - b.order);
+  },
+
+  /**
+   * Suscripción en tiempo real a las categorías de una tienda.
+   * Devuelve la función para cancelar el listener.
+   */
+  subscribe(
+    store_id: string,
+    onChange: (categories: Category[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void {
+    const q = query(col, where("store_id", "==", store_id));
+    return onSnapshot(
+      q,
+      (snap) =>
+        onChange(
+          snap.docs.map((d) => fromFirestore(d.id, d.data())).sort((a, b) => a.order - b.order),
+        ),
+      (error) => onError?.(error),
+    );
   },
 
   async create(store_id: string, input: CreateCategoryInput, order: number): Promise<Category> {

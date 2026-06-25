@@ -20,7 +20,8 @@ interface InventoryState {
   selected_category_id: string | null;
   search_query: string;
 
-  loadInventory: (store_id: string) => Promise<void>;
+  subscribe: (store_id: string) => void;
+  unsubscribe: () => void;
   setSelectedCategory: (id: string | null) => void;
   setSearchQuery: (q: string) => void;
   addCategory: (store_id: string, input: CreateCategoryInput) => Promise<void>;
@@ -65,6 +66,10 @@ const toMeta = (
   };
 };
 
+// Listeners activos fuera del estado: no son datos renderizables.
+let unsubProducts: (() => void) | null = null;
+let unsubCategories: (() => void) | null = null;
+
 export const useInventoryStore = create<InventoryState>((set, get) => ({
   products: [],
   categories: [],
@@ -73,54 +78,75 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   selected_category_id: null,
   search_query: "",
 
-  loadInventory: async (store_id) => {
+  subscribe: (store_id) => {
+    // Evita listeners duplicados si ya había una suscripción activa.
+    get().unsubscribe();
     set({ is_loading: true, error: null });
-    try {
-      const [products, categories] = await Promise.all([
-        productService.getAll(store_id),
-        categoryService.getAll(store_id),
-      ]);
-      set({ products, categories, is_loading: false });
-    } catch (error) {
-      console.error("Error cargando inventario:", error);
+
+    // Apagamos el loading recién cuando ambas colecciones emitieron una vez.
+    let products_ready = false;
+    let categories_ready = false;
+    const settle = () => {
+      if (products_ready && categories_ready) set({ is_loading: false });
+    };
+    const onError = (label: string) => (error: Error) => {
+      console.error(`Error escuchando ${label}:`, error);
       set({ error: "Error cargando inventario", is_loading: false });
-    }
+    };
+
+    unsubProducts = productService.subscribe(
+      store_id,
+      (products) => {
+        products_ready = true;
+        set({ products });
+        settle();
+      },
+      onError("productos"),
+    );
+
+    unsubCategories = categoryService.subscribe(
+      store_id,
+      (categories) => {
+        categories_ready = true;
+        set({ categories });
+        settle();
+      },
+      onError("categorías"),
+    );
+  },
+
+  unsubscribe: () => {
+    unsubProducts?.();
+    unsubCategories?.();
+    unsubProducts = null;
+    unsubCategories = null;
   },
 
   setSelectedCategory: (id) => set({ selected_category_id: id }),
   setSearchQuery: (q) => set({ search_query: q }),
 
+  // Las mutaciones solo escriben en Firestore; el listener reconcilia el estado
+  // local (con latency compensation el cambio se refleja al instante).
   addCategory: async (store_id, input) => {
     const { categories } = get();
-    const category = await categoryService.create(store_id, input, categories.length);
-    set((s) => ({ categories: [...s.categories, category] }));
+    await categoryService.create(store_id, input, categories.length);
   },
 
   updateCategory: async (id, input) => {
     await categoryService.update(id, input);
-    set((s) => ({
-      categories: s.categories.map((c) => (c.id === id ? { ...c, ...input } : c)),
-    }));
   },
 
   removeCategory: async (id) => {
     await categoryService.remove(id);
-    set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }));
   },
 
   addProduct: async (store_id, input) => {
-    const product = await productService.create(store_id, input);
-    set((s) => ({ products: [...s.products, product] }));
+    await productService.create(store_id, input);
   },
 
   updateProduct: async (id, input) => {
     const changed_by = useAuthStore.getState().user?.uid ?? "unknown";
     await productService.update(id, input, changed_by);
-    set((s) => ({
-      products: s.products.map((p) =>
-        p.id === id ? { ...p, ...input, updated_at: new Date() } : p,
-      ),
-    }));
   },
 
   adjustStock: async (product, delta) => {
@@ -132,14 +158,10 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       delta > 0 ? "restock" : "adjustment",
       delta,
     );
-    set((s) => ({
-      products: s.products.map((p) => (p.id === product.id ? { ...p, stock: p.stock + delta } : p)),
-    }));
   },
 
   archiveProduct: async (id) => {
     await productService.archive(id);
-    set((s) => ({ products: s.products.filter((p) => p.id !== id) }));
   },
 
   getFiltered: () => {

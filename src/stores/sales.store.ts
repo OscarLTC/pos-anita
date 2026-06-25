@@ -3,7 +3,6 @@ import type { Sale, CashRegister, CreateSaleInput } from "@/types";
 import { saleService } from "@/services/firestore/sales";
 import { cashRegisterService } from "@/services/firestore/cash-registers";
 import { useAuthStore } from "@/stores/auth.store";
-import { useInventoryStore } from "@/stores/inventory.store";
 
 export const todayISO = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date());
@@ -71,13 +70,8 @@ export const useSalesStore = create<SalesState>((set) => ({
       }));
     }
 
-    for (const item of input.items) {
-      useInventoryStore.setState((s) => ({
-        products: s.products.map((p) =>
-          p.id === item.product_id ? { ...p, stock: p.stock - item.quantity } : p,
-        ),
-      }));
-    }
+    // El stock se descuenta en Firestore dentro de saleService.create (batch);
+    // el listener de productos del inventario refleja el cambio al instante.
 
     if (!isCredit) {
       cashRegisterService

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -39,7 +39,7 @@ const AVATAR_BG = "rgba(242,199,68,0.20)"; // accent suave (amarillo)
 
 export default function VenderScreen() {
   const { store } = useAuthStore();
-  const { products, categories, loadInventory, is_loading } = useInventoryStore();
+  const { products, categories, is_loading } = useInventoryStore();
   const createSale = useSalesStore((s) => s.createSale);
 
   const items = useCartStore((s) => s.items);
@@ -65,10 +65,6 @@ export default function VenderScreen() {
   const [newClientVisible, setNewClientVisible] = useState(false);
   const [registeringClientId, setRegisteringClientId] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
-
-  useEffect(() => {
-    if (store?.id && products.length === 0) loadInventory(store.id);
-  }, [store?.id]);
 
   const filtered = useMemo(
     () =>
