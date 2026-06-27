@@ -131,7 +131,6 @@ export function BarcodeScannerModal({
               }}
             />
 
-            {/* Marco con esquinas */}
             <View style={s.frameWrap} pointerEvents="none">
               <View style={s.frame}>
                 <View style={[s.corner, s.cornerTL]} />
@@ -151,7 +150,6 @@ export function BarcodeScannerModal({
               </TouchableWithoutFeedback>
             )}
 
-            {/* Header */}
             <View style={[s.headerSafe, { paddingTop: insets.top }]}>
               <View style={s.header}>
                 <TouchableOpacity style={s.headerBtn} onPress={onClose} hitSlop={8}>
@@ -172,7 +170,6 @@ export function BarcodeScannerModal({
               </View>
             </View>
 
-            {/* Tarjeta inferior */}
             <View style={[s.bottomSafe, { paddingBottom: insets.bottom || spacing.md }]}>
               <View style={s.card}>{renderCard(result, onAdd)}</View>
             </View>

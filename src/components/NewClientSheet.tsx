@@ -59,7 +59,6 @@ export function NewClientSheet({ visible, onClose, onCreate, saving, initial }: 
           </TouchableOpacity>
         </View>
 
-        {/* Preview */}
         <View style={s.preview}>
           <View style={s.avatar}>
             <Text style={s.avatarText}>?</Text>
@@ -70,7 +69,6 @@ export function NewClientSheet({ visible, onClose, onCreate, saving, initial }: 
           </View>
         </View>
 
-        {/* Nombre */}
         <Text style={s.label}>
           Nombre completo <Text style={s.req}>*</Text>
         </Text>
@@ -83,7 +81,6 @@ export function NewClientSheet({ visible, onClose, onCreate, saving, initial }: 
           autoCapitalize="words"
         />
 
-        {/* Teléfono */}
         <Text style={s.label}>
           Teléfono <Text style={s.hint}>(para enviar recordatorios)</Text>
         </Text>
@@ -105,7 +102,6 @@ export function NewClientSheet({ visible, onClose, onCreate, saving, initial }: 
           )}
         </View>
 
-        {/* Apodo */}
         <Text style={s.label}>
           Apodo o referencia <Text style={s.hint}>(opcional)</Text>
         </Text>
@@ -117,7 +113,6 @@ export function NewClientSheet({ visible, onClose, onCreate, saving, initial }: 
           onChangeText={setNickname}
         />
 
-        {/* Acciones */}
         <View style={s.actions}>
           <TouchableOpacity style={s.cancelBtn} onPress={onClose} disabled={saving}>
             <Text style={s.cancelText}>Cancelar</Text>

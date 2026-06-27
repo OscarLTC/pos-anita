@@ -106,7 +106,6 @@ export default function InventoryScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      {/* Header */}
       <View style={s.header}>
         <View style={{ flex: 1 }}>
           <Text style={s.eyebrow}>
@@ -122,7 +121,6 @@ export default function InventoryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Stats */}
       <View style={s.stats}>
         <View style={s.statCard}>
           <Text style={s.statLabel}>VALOR INVENTARIO</Text>
@@ -141,7 +139,6 @@ export default function InventoryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Buscador + escáner */}
       <View style={s.searchRow}>
         <View style={s.searchBox}>
           <Ionicons name="search" size={18} color={colors.inkSoft} />
@@ -160,7 +157,6 @@ export default function InventoryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Chips */}
       <View>
         <ScrollView
           horizontal
@@ -183,7 +179,6 @@ export default function InventoryScreen() {
         </ScrollView>
       </View>
 
-      {/* Lista */}
       {is_loading && active.length === 0 ? (
         <View style={s.center}>
           <ActivityIndicator size="large" color={colors.primary} />

@@ -60,7 +60,6 @@ export default function VenderScreen() {
   const [checkoutTotal, setCheckoutTotal] = useState(0);
   const [registering, setRegistering] = useState(false);
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
-  // Fiar
   const [fiarVisible, setFiarVisible] = useState(false);
   const [newClientVisible, setNewClientVisible] = useState(false);
   const [registeringClientId, setRegisteringClientId] = useState<string | null>(null);
@@ -112,7 +111,7 @@ export default function VenderScreen() {
       setTimeout(() => setWeightModal({ product, qty }), 350);
     } else {
       addUnit(product);
-      setScan(null); // sigue escaneando
+      setScan(null);
     }
   };
 
@@ -176,7 +175,6 @@ export default function VenderScreen() {
     }
   };
 
-  // Registra una venta a crédito (fiado) al cliente dado.
   const doFiar = async (client: Client) => {
     if (!store?.id || items.length === 0) return;
     const total = cartRawTotal(items);
@@ -276,13 +274,11 @@ export default function VenderScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      {/* Header */}
       <View style={s.header}>
         <Text style={s.eyebrow}>PUNTO DE VENTA</Text>
         <Text style={s.title}>Vender</Text>
       </View>
 
-      {/* Buscador + escáner */}
       <View style={s.searchRow}>
         <View style={s.searchBox}>
           <Ionicons name="search" size={18} color={colors.inkSoft} />
@@ -302,7 +298,6 @@ export default function VenderScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Filtro de categorías */}
       <View>
         <ScrollView
           horizontal
@@ -325,7 +320,6 @@ export default function VenderScreen() {
         </ScrollView>
       </View>
 
-      {/* Lista de productos */}
       {is_loading && filtered.length === 0 ? (
         <View style={s.center}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -351,7 +345,6 @@ export default function VenderScreen() {
         />
       )}
 
-      {/* Barra Ver carrito */}
       {cartCount > 0 && (
         <TouchableOpacity
           style={s.cartBar}

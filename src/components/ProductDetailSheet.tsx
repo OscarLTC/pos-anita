@@ -123,7 +123,6 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
             </TouchableOpacity>
           </View>
 
-          {/* Cabecera del producto */}
           <View style={s.productRow}>
             <TouchableOpacity onPress={() => onEdit(p)} activeOpacity={0.8}>
               <View style={[s.avatar, { backgroundColor: withAlpha(color, 0.2) }]}>
@@ -155,7 +154,6 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Stock actual */}
             <View style={s.card}>
               <Text style={s.cardLabel}>STOCK ACTUAL</Text>
               <View style={s.stepperRow}>
@@ -185,7 +183,6 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
               </View>
             </View>
 
-            {/* Precios */}
             <View style={s.card}>
               <Text style={s.cardLabel}>PRECIOS</Text>
               <View style={s.pricesRow}>
@@ -208,7 +205,6 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
               </View>
             </View>
 
-            {/* Movimientos */}
             <View style={s.card}>
               <Text style={s.cardLabel}>ÚLTIMOS MOVIMIENTOS</Text>
               {loadingMov ? (
@@ -242,7 +238,6 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
             </View>
           </ScrollView>
 
-          {/* Footer */}
           <View style={s.footer}>
             <TouchableOpacity
               style={[s.editBtn, busy && s.saveDisabled]}

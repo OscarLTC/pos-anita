@@ -105,7 +105,6 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
           showsVerticalScrollIndicator={false}
           style={s.scroll}
         >
-          {/* Escanear código */}
           <TouchableOpacity
             style={s.scanBox}
             onPress={() => setScannerVisible(true)}
@@ -126,7 +125,6 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
             </View>
           </TouchableOpacity>
 
-          {/* Nombre */}
           <Text style={s.label}>Nombre del producto</Text>
           <TextInput
             style={s.input}
@@ -137,7 +135,6 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
             autoCapitalize="sentences"
           />
 
-          {/* Categoría */}
           <Text style={s.label}>Categoría</Text>
           <TouchableOpacity
             style={s.select}
@@ -180,7 +177,6 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
             </View>
           )}
 
-          {/* Se vende por */}
           <Text style={s.label}>Se vende por</Text>
           <View style={s.unitRow}>
             <TouchableOpacity
@@ -201,7 +197,6 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
             </TouchableOpacity>
           </View>
 
-          {/* Precios + stock */}
           <View style={s.priceRow}>
             <View style={s.priceCol}>
               <Text style={s.label}>Costo</Text>
@@ -238,7 +233,6 @@ export function NewProductSheet({ visible, onClose, product }: Props) {
             </View>
           </View>
 
-          {/* Acciones */}
           <View style={s.actions}>
             <TouchableOpacity style={s.cancelBtn} onPress={onClose} disabled={saving}>
               <Text style={s.cancelText}>Cancelar</Text>

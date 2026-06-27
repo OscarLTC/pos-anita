@@ -65,24 +65,20 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Marca */}
           <View style={s.logo}>
             <Ionicons name="basket" size={28} color={colors.primaryInk} />
           </View>
           <Text style={s.title}>Crea tu{"\n"}cuenta.</Text>
           <Text style={s.subtitle}>Empieza a ordenar tu bodega en minutos. Es gratis.</Text>
 
-          {/* Google */}
           <GoogleSignInButton onError={setError} />
 
-          {/* Divisor */}
           <View style={s.divider}>
             <View style={s.dividerLine} />
             <Text style={s.dividerText}>o con correo</Text>
             <View style={s.dividerLine} />
           </View>
 
-          {/* Formulario */}
           <View style={s.form}>
             <TextInput
               style={s.input}
@@ -132,13 +128,11 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Volver a login */}
           <TouchableOpacity style={s.loginRow} onPress={() => router.back()}>
             <Text style={s.loginMuted}>¿Ya tienes cuenta? </Text>
             <Text style={s.loginLink}>Inicia sesión</Text>
           </TouchableOpacity>
 
-          {/* Footer */}
           <Text style={s.footer}>
             Al crear una cuenta aceptas los <Text style={s.footerLink}>términos</Text> y la{" "}
             <Text style={s.footerLink}>política de privacidad</Text>

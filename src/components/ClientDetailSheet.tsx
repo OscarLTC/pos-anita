@@ -44,7 +44,6 @@ export function ClientDetailSheet({
             </TouchableOpacity>
           </View>
 
-          {/* Perfil */}
           <View style={s.profile}>
             <View style={[s.avatar, { backgroundColor: avatarColor(client.name) }]}>
               <Text style={s.avatarText}>{initials(client.name)}</Text>
@@ -72,7 +71,6 @@ export function ClientDetailSheet({
             )}
           </View>
 
-          {/* Saldo + acciones */}
           <View style={s.card}>
             <View style={s.saldoRow}>
               <Text style={s.saldoLabel}>SALDO DEUDOR</Text>
@@ -100,7 +98,6 @@ export function ClientDetailSheet({
             </View>
           </View>
 
-          {/* Historial */}
           <Text style={s.histLabel}>
             HISTORIAL · {apuntes.length} {apuntes.length === 1 ? "APUNTE" : "APUNTES"}
           </Text>

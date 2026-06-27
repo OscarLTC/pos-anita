@@ -60,7 +60,6 @@ export function WeightInputModal({ product, initial_quantity, onConfirm, onClose
         <View style={s.sheet}>
           <View style={s.handle} />
 
-          {/* Header */}
           <View style={s.header}>
             <Text style={s.title}>{initial_quantity ? "Editar peso" : "Agregar peso"}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={8}>
@@ -68,7 +67,6 @@ export function WeightInputModal({ product, initial_quantity, onConfirm, onClose
             </TouchableOpacity>
           </View>
 
-          {/* Producto */}
           <View style={s.productRow}>
             <Text style={s.productName} numberOfLines={1}>
               {p.name}
@@ -78,7 +76,6 @@ export function WeightInputModal({ product, initial_quantity, onConfirm, onClose
             </Text>
           </View>
 
-          {/* Display */}
           <View style={s.display}>
             <Text style={s.displayLabel}>PESO</Text>
             <Text style={s.displayValue}>
@@ -87,7 +84,6 @@ export function WeightInputModal({ product, initial_quantity, onConfirm, onClose
             <Text style={s.displayTotal}>= {soles(total)}</Text>
           </View>
 
-          {/* Chips rápidos */}
           <View style={s.quickRow}>
             {quickValues.map((v) => (
               <TouchableOpacity key={v} style={s.quickChip} onPress={() => setInput(String(v))}>
@@ -98,7 +94,6 @@ export function WeightInputModal({ product, initial_quantity, onConfirm, onClose
             ))}
           </View>
 
-          {/* Teclado */}
           <View style={s.keypad}>
             {KEYS.map((key) => (
               <TouchableOpacity
@@ -116,7 +111,6 @@ export function WeightInputModal({ product, initial_quantity, onConfirm, onClose
             ))}
           </View>
 
-          {/* Confirmar */}
           <TouchableOpacity
             style={[s.confirmBtn, !isValid && s.confirmDisabled]}
             onPress={handleConfirm}

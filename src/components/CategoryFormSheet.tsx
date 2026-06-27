@@ -53,7 +53,6 @@ export function CategoryFormSheet({ visible, initial, saving, onClose, onSave }:
           </TouchableOpacity>
         </View>
 
-        {/* Emoji + nombre */}
         <Text style={s.label}>Nombre</Text>
         <View style={s.nameRow}>
           <TextInput
@@ -73,7 +72,6 @@ export function CategoryFormSheet({ visible, initial, saving, onClose, onSave }:
           />
         </View>
 
-        {/* Color */}
         <Text style={s.label}>Color</Text>
         <View style={s.swatches}>
           {CATEGORY_COLORS.map((c) => (
@@ -87,7 +85,6 @@ export function CategoryFormSheet({ visible, initial, saving, onClose, onSave }:
           ))}
         </View>
 
-        {/* Acciones */}
         <View style={s.actions}>
           <TouchableOpacity style={s.cancelBtn} onPress={onClose} disabled={saving}>
             <Text style={s.cancelText}>Cancelar</Text>

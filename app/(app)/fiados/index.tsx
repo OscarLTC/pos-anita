@@ -227,7 +227,7 @@ export default function FiadosScreen() {
         await Linking.openURL(url);
         return;
       } catch {
-        // intenta el siguiente esquema
+        continue;
       }
     }
     Alert.alert("WhatsApp", "No se pudo abrir WhatsApp. Verifica que esté instalado.");
@@ -277,7 +277,6 @@ export default function FiadosScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      {/* Header */}
       <View style={s.header}>
         <View>
           <Text style={s.eyebrow}>CUADERNO DIGITAL</Text>
@@ -288,7 +287,6 @@ export default function FiadosScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Total por cobrar */}
       <View style={s.totalCard}>
         <View style={s.totalLeft}>
           <Text style={s.totalLabel}>TOTAL POR COBRAR</Text>
@@ -314,7 +312,6 @@ export default function FiadosScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Buscar */}
       <View style={s.searchBox}>
         <Ionicons name="search" size={18} color={colors.inkSoft} />
         <TextInput
@@ -351,7 +348,6 @@ export default function FiadosScreen() {
         />
       )}
 
-      {/* --- Sheets --- */}
       <FiarSheet
         visible={fiarPick}
         onClose={() => setFiarPick(false)}

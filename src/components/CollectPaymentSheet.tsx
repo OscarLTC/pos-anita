@@ -67,7 +67,6 @@ export function CollectPaymentSheet({ client, saving, onClose, onConfirm }: Prop
             </TouchableOpacity>
           </View>
 
-          {/* Cliente */}
           <View style={s.clientRow}>
             <View style={[s.avatar, { backgroundColor: avatarColor(client.name) }]}>
               <Text style={s.avatarText}>{initials(client.name)}</Text>
@@ -80,7 +79,6 @@ export function CollectPaymentSheet({ client, saving, onClose, onConfirm }: Prop
             </View>
           </View>
 
-          {/* Monto */}
           <View style={s.display}>
             <Text style={s.displayLabel}>MONTO ABONADO</Text>
             <View style={s.amountRow}>
@@ -108,7 +106,6 @@ export function CollectPaymentSheet({ client, saving, onClose, onConfirm }: Prop
             </View>
           </View>
 
-          {/* Método */}
           <Text style={s.methodLabel}>Método de cobro</Text>
           <View style={s.methodRow}>
             {METHODS.map((m) => {
@@ -127,7 +124,6 @@ export function CollectPaymentSheet({ client, saving, onClose, onConfirm }: Prop
             })}
           </View>
 
-          {/* Confirmar */}
           <TouchableOpacity
             style={[s.confirmBtn, !valid && s.confirmDisabled]}
             onPress={handleConfirm}

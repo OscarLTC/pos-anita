@@ -51,7 +51,6 @@ export function ManualFiadoSheet({ client, saving, onClose, onConfirm }: Props) 
             </TouchableOpacity>
           </View>
 
-          {/* Cliente */}
           <View style={s.clientRow}>
             <View style={[s.avatar, { backgroundColor: avatarColor(client.name) }]}>
               <Text style={s.avatarText}>{initials(client.name)}</Text>
@@ -66,7 +65,6 @@ export function ManualFiadoSheet({ client, saving, onClose, onConfirm }: Props) 
             </View>
           </View>
 
-          {/* Monto */}
           <View style={s.display}>
             <Text style={s.displayLabel}>MONTO A FIAR</Text>
             <View style={s.amountRow}>
@@ -85,7 +83,6 @@ export function ManualFiadoSheet({ client, saving, onClose, onConfirm }: Props) 
             </View>
           </View>
 
-          {/* Concepto */}
           <Text style={s.conceptLabel}>
             Concepto <Text style={s.hint}>(opcional)</Text>
           </Text>
@@ -98,7 +95,6 @@ export function ManualFiadoSheet({ client, saving, onClose, onConfirm }: Props) 
             editable={!saving}
           />
 
-          {/* Confirmar */}
           <TouchableOpacity
             style={[s.confirmBtn, !valid && s.confirmDisabled]}
             onPress={handleConfirm}

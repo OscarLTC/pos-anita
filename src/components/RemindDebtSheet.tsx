@@ -36,7 +36,6 @@ export function RemindDebtSheet({ client, storeName, onClose, onSend }: Props) {
             </TouchableOpacity>
           </View>
 
-          {/* Cliente */}
           <View style={s.clientRow}>
             <View style={[s.avatar, { backgroundColor: avatarColor(client.name) }]}>
               <Text style={s.avatarText}>{initials(client.name)}</Text>
@@ -52,7 +51,6 @@ export function RemindDebtSheet({ client, storeName, onClose, onSend }: Props) {
             </View>
           </View>
 
-          {/* Tono */}
           <Text style={s.toneLabel}>Tono del mensaje</Text>
           <View style={s.toneRow}>
             {REMINDER_TONES.map((t) => {
@@ -70,7 +68,6 @@ export function RemindDebtSheet({ client, storeName, onClose, onSend }: Props) {
             })}
           </View>
 
-          {/* Preview */}
           <View style={s.bubbleWrap}>
             <View style={s.bubble}>
               <Text style={s.bubbleText}>{message}</Text>
@@ -78,7 +75,6 @@ export function RemindDebtSheet({ client, storeName, onClose, onSend }: Props) {
             </View>
           </View>
 
-          {/* Enviar */}
           <TouchableOpacity
             style={[s.sendBtn, !client.phone && s.sendDisabled]}
             onPress={() => onSend(message)}

@@ -77,7 +77,6 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Marca */}
           <View style={s.logo}>
             <Ionicons name="basket" size={28} color={colors.primaryInk} />
           </View>
@@ -86,17 +85,14 @@ export default function LoginScreen() {
             Lleva ventas, inventario y fiados en un solo lugar. Adiós al cuaderno.
           </Text>
 
-          {/* Google */}
           <GoogleSignInButton onError={setError} />
 
-          {/* Divisor */}
           <View style={s.divider}>
             <View style={s.dividerLine} />
             <Text style={s.dividerText}>o con correo</Text>
             <View style={s.dividerLine} />
           </View>
 
-          {/* Formulario */}
           <View style={s.form}>
             <TextInput
               style={s.input}
@@ -141,13 +137,11 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Registro */}
           <TouchableOpacity style={s.registerRow} onPress={handleRegister}>
             <Text style={s.registerMuted}>¿No tienes cuenta? </Text>
             <Text style={s.registerLink}>Regístrate</Text>
           </TouchableOpacity>
 
-          {/* Footer */}
           <Text style={s.footer}>
             Al continuar aceptas los <Text style={s.footerLink}>términos</Text> y la{" "}
             <Text style={s.footerLink}>política de privacidad</Text>
