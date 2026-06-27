@@ -14,9 +14,14 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
+import { cashRegisterService } from "@/services/firestore/cash-registers";
 import type { Sale, CreateSaleInput } from "@/types";
 
 const col = collection(db, "sales");
+
+/** YYYY-MM-DD de una fecha en hora Lima (id de la caja del día). */
+const limaDate = (d: Date) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(d);
 
 const fromFirestore = (id: string, data: DocumentData): Sale => ({
   id,
@@ -130,9 +135,65 @@ export const saleService = {
     return snap.docs.map((d) => fromFirestore(d.id, d.data()));
   },
 
+  /** Ventas completadas dentro de un rango de fechas, más recientes primero. */
+  async getByRange(store_id: string, start: Date, end: Date): Promise<Sale[]> {
+    const q = query(
+      col,
+      where("store_id", "==", store_id),
+      where("status", "==", "completed"),
+      where("created_at", ">=", Timestamp.fromDate(start)),
+      where("created_at", "<=", Timestamp.fromDate(end)),
+      orderBy("created_at", "desc"),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => fromFirestore(d.id, d.data()));
+  },
+
   async getById(id: string): Promise<Sale | null> {
     const snap = await getDoc(doc(db, "sales", id));
     if (!snap.exists()) return null;
     return fromFirestore(snap.id, snap.data());
+  },
+
+  /**
+   * Anula una venta: la marca como cancelada, devuelve el stock de cada ítem
+   * (con su movimiento de reversa) y, si fue fiado, descuenta la deuda del cliente.
+   * La caja del día se revierte aparte (solo afecta a ventas no-fiado).
+   */
+  async voidSale(sale: Sale): Promise<void> {
+    const batch = writeBatch(db);
+    const now = serverTimestamp();
+
+    batch.update(doc(db, "sales", sale.id), { status: "cancelled", cancelled_at: now });
+
+    for (const item of sale.items) {
+      batch.update(doc(db, "products", item.product_id), {
+        stock: increment(item.quantity),
+        updated_at: now,
+      });
+      const moveRef = doc(collection(db, "stock_movements"));
+      batch.set(moveRef, {
+        store_id: sale.store_id,
+        product_id: item.product_id,
+        type: "adjustment",
+        delta: item.quantity,
+        created_at: now,
+      });
+    }
+
+    if (sale.payment_type === "credit" && sale.client_id) {
+      batch.update(doc(db, "clients", sale.client_id), {
+        debt: increment(-sale.total),
+        updated_at: now,
+      });
+    }
+
+    await batch.commit();
+
+    if (sale.payment_type !== "credit") {
+      await cashRegisterService
+        .reverseSale(sale.store_id, limaDate(sale.created_at), sale.total, sale.payment_type)
+        .catch((err) => console.error("Error revirtiendo caja:", err));
+    }
   },
 };

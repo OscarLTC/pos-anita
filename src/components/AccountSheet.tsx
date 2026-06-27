@@ -1,0 +1,295 @@
+import { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Switch, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { BottomSheet } from "@/components/BottomSheet";
+import { BusinessInfoSheet } from "@/components/BusinessInfoSheet";
+import { useAuthStore } from "@/stores/auth.store";
+import { initials } from "@/lib/format";
+import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
+
+interface Props {
+  visible: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+}
+
+interface MenuItem {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  subtitle: string;
+  accent?: boolean;
+  /** Marca la opción que abre la hoja de datos del negocio. */
+  biz?: boolean;
+}
+
+const MENU: MenuItem[] = [
+  {
+    icon: "document-text-outline",
+    title: "Datos del negocio",
+    subtitle: "Nombre, RUC, dirección",
+    biz: true,
+  },
+  { icon: "people-outline", title: "Usuarios y permisos", subtitle: "Cajeros, gerencia" },
+  { icon: "notifications-outline", title: "Notificaciones", subtitle: "WhatsApp, recordatorios" },
+  { icon: "print-outline", title: "Impresoras y tickets", subtitle: "Configura tu impresora" },
+  { icon: "star", title: "Suscripción", subtitle: "Plan gratis · sube a Pro", accent: true },
+];
+
+const soon = () => Alert.alert("Próximamente", "Esta opción estará disponible pronto.");
+
+export function AccountSheet({ visible, onClose, onLogout }: Props) {
+  const user = useAuthStore((s) => s.user);
+  const store = useAuthStore((s) => s.store);
+  const updateStore = useAuthStore((s) => s.updateStore);
+
+  const name = user?.displayName || store?.name || user?.email?.split("@")[0] || "Mi cuenta";
+  const email = user?.email ?? "";
+
+  const [bizOpen, setBizOpen] = useState(false);
+  // Al cerrar del todo la hoja, vuelve siempre a la página de Cuenta.
+  useEffect(() => {
+    if (!visible) setBizOpen(false);
+  }, [visible]);
+
+  const handleClose = () => (bizOpen ? setBizOpen(false) : onClose());
+
+  // Toggle optimista del redondeo; revierte si falla el guardado.
+  const [round, setRound] = useState(store?.round_weighted ?? false);
+  useEffect(() => setRound(store?.round_weighted ?? false), [store?.round_weighted]);
+
+  const toggleRound = async (value: boolean) => {
+    setRound(value);
+    try {
+      await updateStore({ round_weighted: value });
+    } catch {
+      setRound(!value);
+      Alert.alert("Error", "No se pudo guardar el cambio. Intenta de nuevo.");
+    }
+  };
+
+  return (
+    <BottomSheet visible={visible} onClose={handleClose} maxHeightRatio={bizOpen ? 0.95 : 0.9}>
+      {bizOpen ? (
+        <BusinessInfoSheet onBack={() => setBizOpen(false)} />
+      ) : (
+        <View style={s.sheet}>
+          <View style={s.handle} />
+
+        <View style={s.header}>
+          <Text style={s.title}>Cuenta</Text>
+          <TouchableOpacity onPress={onClose} hitSlop={8}>
+            <Ionicons name="close" size={24} color={colors.ink} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
+          <View style={s.profile}>
+            <View style={s.avatar}>
+              <Text style={s.avatarText}>{initials(name)}</Text>
+            </View>
+            <View style={s.profileInfo}>
+              <Text style={s.name} numberOfLines={1}>
+                {name}
+              </Text>
+              {!!email && (
+                <Text style={s.email} numberOfLines={1}>
+                  {email}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={s.bizCard}
+            onPress={() => setBizOpen(true)}
+            activeOpacity={0.8}
+          >
+            <View style={s.bizIcon}>
+              <Ionicons name="storefront" size={22} color={colors.primaryInk} />
+            </View>
+            <View style={s.bizInfo}>
+              <Text style={s.bizEyebrow}>NEGOCIO</Text>
+              <Text style={s.bizName} numberOfLines={1}>
+                {store?.name ?? "Mi negocio"}
+              </Text>
+              <Text style={s.bizSub}>Lima · Plan gratis</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
+          </TouchableOpacity>
+
+          <View>
+            <Text style={s.sectionLabel}>PREFERENCIAS DE VENTA</Text>
+            <View style={s.prefCard}>
+              <View style={s.prefInfo}>
+                <Text style={s.prefTitle}>Redondear precios por peso</Text>
+                <Text style={s.prefSub}>Los productos por kg/L se redondean a S/ 0.10</Text>
+              </View>
+              <Switch
+                value={round}
+                onValueChange={toggleRound}
+                trackColor={{ false: colors.surfaceMuted, true: colors.primary }}
+                thumbColor="#fff"
+                ios_backgroundColor={colors.surfaceMuted}
+              />
+            </View>
+          </View>
+
+          <View style={s.menu}>
+            {MENU.map((item, i) => (
+              <TouchableOpacity
+                key={item.title}
+                style={[s.menuRow, i > 0 && s.menuDivider]}
+                onPress={() => (item.biz ? setBizOpen(true) : soon())}
+                activeOpacity={0.7}
+              >
+                <View style={[s.menuIcon, item.accent && s.menuIconAccent]}>
+                  <Ionicons
+                    name={item.icon}
+                    size={18}
+                    color={item.accent ? colors.accentInk : colors.inkMid}
+                  />
+                </View>
+                <View style={s.menuInfo}>
+                  <Text style={s.menuTitle}>{item.title}</Text>
+                  <Text style={s.menuSub}>{item.subtitle}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.inkSoft} />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity style={s.logoutBtn} onPress={onLogout} activeOpacity={0.7}>
+            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+            <Text style={s.logoutText}>Cerrar sesión</Text>
+          </TouchableOpacity>
+
+          <Text style={s.footer}>Caserita · v0.9 (beta)</Text>
+        </ScrollView>
+        </View>
+      )}
+    </BottomSheet>
+  );
+}
+
+const s = StyleSheet.create({
+  sheet: {
+    flexShrink: 1,
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+  handle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.borderStrong,
+    marginBottom: spacing.sm,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.lg,
+  },
+  title: { ...typography.title, color: colors.ink },
+  scroll: { gap: spacing.lg, paddingBottom: spacing.lg },
+
+  profile: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: { color: colors.accentInk, fontFamily: fontFamilies.display, fontSize: fontSize.lg },
+  profileInfo: { flex: 1, gap: 2 },
+  name: { fontFamily: fontFamilies.display, fontSize: fontSize.xl, color: colors.ink, letterSpacing: -0.3 },
+  email: { ...typography.bodySm, color: colors.inkSoft },
+
+  bizCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.shadow,
+  },
+  bizIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bizInfo: { flex: 1, gap: 1 },
+  bizEyebrow: { ...typography.caption, color: colors.inkSoft, letterSpacing: 1 },
+  bizName: { fontFamily: fontFamilies.display, fontSize: fontSize.md, color: colors.ink },
+  bizSub: { ...typography.bodySm, color: colors.inkSoft },
+
+  sectionLabel: {
+    ...typography.caption,
+    color: colors.inkSoft,
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+  },
+  prefCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...shadows.shadow,
+  },
+  prefInfo: { flex: 1, gap: 2 },
+  prefTitle: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
+  prefSub: { ...typography.bodySm, color: colors.inkSoft },
+  menu: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    ...shadows.shadow,
+  },
+  menuRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md },
+  menuDivider: { borderTopWidth: 1, borderTopColor: colors.border },
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuIconAccent: { backgroundColor: colors.accent },
+  menuInfo: { flex: 1, gap: 1 },
+  menuTitle: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
+  menuSub: { ...typography.bodySm, color: colors.inkSoft },
+
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    height: 52,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  logoutText: { ...typography.body, fontFamily: fontFamilies.display, color: colors.danger },
+  footer: { ...typography.caption, color: colors.inkSoft, textAlign: "center" },
+});

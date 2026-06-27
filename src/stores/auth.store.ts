@@ -11,7 +11,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { storeService } from "@/services/firestore/stores";
-import type { Store } from "@/types";
+import type { Store, UpdateStoreInput } from "@/types";
 
 /** Error de app: la cuenta existe pero solo tiene proveedor Google (sin contraseña). */
 export const GOOGLE_ACCOUNT_ONLY = "auth/google-account-only";
@@ -21,6 +21,7 @@ interface AuthState {
   store: Store | null | undefined;
   setUser: (user: User | null) => void;
   loadStore: (userId: string) => Promise<void>;
+  updateStore: (input: UpdateStoreInput) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
@@ -28,7 +29,7 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: undefined,
   store: undefined,
 
@@ -48,6 +49,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error("Error cargando tienda:", error);
       set({ store: null });
     }
+  },
+
+  updateStore: async (input) => {
+    const current = get().store;
+    if (!current) return;
+    await storeService.update(current.id, input);
+    set({ store: { ...current, ...input } });
   },
 
   login: async (email, password) => {

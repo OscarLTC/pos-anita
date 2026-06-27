@@ -10,7 +10,17 @@ export interface Store {
   owner_id: string;
   currency: string;
   default_min_margin: number;
-  rounding_methods: PaymentType[];
+  /** Redondea a S/ 0.10 el subtotal de los productos vendidos por peso (kg/L). */
+  round_weighted: boolean;
+  // Datos del negocio — se imprimen en boletas y aparecen en mensajes de WhatsApp.
+  ruc?: string;
+  phone?: string;
+  address?: string;
+  district?: string;
+  /** Horario de atención en formato "HH:MM" (24h). */
+  open_time?: string;
+  close_time?: string;
+  logo_url?: string;
   created_at: Date;
 }
 
@@ -74,7 +84,20 @@ export type UpdateProductInput = Partial<CreateProductInput>;
 export type CreatePriceHistoryInput = Omit<PriceHistory, "id" | "changed_at">;
 
 export type UpdateStoreInput = Partial<
-  Pick<Store, "name" | "currency" | "default_min_margin" | "rounding_methods">
+  Pick<
+    Store,
+    | "name"
+    | "currency"
+    | "default_min_margin"
+    | "round_weighted"
+    | "ruc"
+    | "phone"
+    | "address"
+    | "district"
+    | "open_time"
+    | "close_time"
+    | "logo_url"
+  >
 >;
 
 export type PaymentType = "cash" | "yape" | "plin" | "card" | "credit";

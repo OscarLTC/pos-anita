@@ -23,6 +23,18 @@ export interface PaymentMethod {
  * aislado aquí: la UI del cobro se construye a partir de esta lista, así que cuando
  * se vuelva configurable solo cambia el origen de los datos, no las pantallas.
  */
+/**
+ * Presentación (etiqueta + color) por tipo de pago, para badges, puntos y leyendas.
+ * Incluye todos los PaymentType (a diferencia de PAYMENT_METHODS, que modela el cobro).
+ */
+export const PAYMENT_UI: Record<PaymentType, { label: string; color: string }> = {
+  cash: { label: "Efectivo", color: "#0E5E3E" },
+  yape: { label: "Yape", color: "#742384" },
+  plin: { label: "Plin", color: "#0FA9C0" },
+  card: { label: "Tarjeta", color: "#2B5FB8" },
+  credit: { label: "Fiado", color: "#F2C744" },
+};
+
 export const PAYMENT_METHODS: PaymentMethod[] = [
   {
     id: "cash",

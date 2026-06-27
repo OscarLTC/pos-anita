@@ -67,15 +67,25 @@ export const useCartStore = create<CartState>((set, get) => ({
   getQty: (productId) => get().items.find((i) => i.product.id === productId)?.quantity ?? 0,
 }));
 
-/** Total bruto (sin redondeo de pago). */
+/** ¿El producto se vende por peso/volumen (no por unidad)? */
+export const isWeighed = (item: CartItem) => item.product.unit !== "unit";
+
+/** Redondeo a la decena de céntimo más cercana (S/ 0.10): 9.45 → 9.50, 9.51 → 9.50. */
+export const roundToCash = (amount: number) => Math.round(amount * 10) / 10;
+
+/**
+ * Subtotal de un ítem. Si la tienda redondea y el producto es por peso, ajusta a
+ * la decena de céntimo más cercana; el resto queda exacto.
+ */
+export const itemSubtotal = (item: CartItem, roundWeighted: boolean) => {
+  const raw = item.product.sale_price * item.quantity;
+  return roundWeighted && isWeighed(item) ? roundToCash(raw) : raw;
+};
+
+/** Total bruto (sin redondeo). */
 export const cartRawTotal = (items: CartItem[]) =>
   items.reduce((sum, i) => sum + i.product.sale_price * i.quantity, 0);
 
-/** Redondeo a la decena de céntimo más cercana (efectivo sin monedas chicas). */
-export const roundToCash = (amount: number) => Math.round(amount * 10) / 10;
-
-/** Total efectivo aplicando (o no) redondeo por ítem según el método de pago. */
-export const cartTotal = (items: CartItem[], applyRounding: boolean) =>
-  applyRounding
-    ? items.reduce((sum, i) => sum + roundToCash(i.product.sale_price * i.quantity), 0)
-    : cartRawTotal(items);
+/** Total aplicando el redondeo de ítems de peso si está activo en la tienda. */
+export const cartTotal = (items: CartItem[], roundWeighted: boolean) =>
+  items.reduce((sum, i) => sum + itemSubtotal(i, roundWeighted), 0);

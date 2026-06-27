@@ -8,7 +8,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
@@ -26,6 +25,7 @@ import { RemindDebtSheet } from "@/components/RemindDebtSheet";
 import { RemindAllSheet } from "@/components/RemindAllSheet";
 import { SuccessSheet } from "@/components/SuccessSheet";
 import { soles, initials, avatarColor } from "@/lib/format";
+import { openWhatsApp } from "@/lib/whatsapp";
 import {
   buildHistorial,
   summarize,
@@ -213,26 +213,6 @@ export default function FiadosScreen() {
   };
 
   // --- Recordatorios ---
-  // Abre WhatsApp con el mensaje. Intenta el esquema nativo y cae a wa.me;
-  // captura el error para no dejar promesas sin manejar.
-  const openWhatsApp = async (phone: string, message: string) => {
-    const digits = phone.replace(/\D/g, "");
-    const text = encodeURIComponent(message);
-    const urls = [
-      `whatsapp://send?phone=${digits}&text=${text}`,
-      `https://wa.me/${digits}?text=${text}`,
-    ];
-    for (const url of urls) {
-      try {
-        await Linking.openURL(url);
-        return;
-      } catch {
-        continue;
-      }
-    }
-    Alert.alert("WhatsApp", "No se pudo abrir WhatsApp. Verifica que esté instalado.");
-  };
-
   const handleRemind = (message: string) => {
     const client = byId(recordarId);
     setRecordarId(null);

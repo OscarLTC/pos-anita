@@ -113,8 +113,20 @@ export const REMINDER_TONES: { id: ReminderTone; label: string }[] = [
   { id: "formal", label: "Formal" },
 ];
 
-function firstName(name: string): string {
+export function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? name;
+}
+
+/** Mensaje de WhatsApp con el detalle de una venta fiada (recibo digital). */
+export function saleReceiptMessage(sale: Sale, storeName?: string): string {
+  const who = firstName(sale.client_name ?? "");
+  const store = storeName?.trim() || "la bodega";
+  const lines = sale.items.map((it) => `• ${it.product_name} — ${soles(it.subtotal)}`);
+  const body = lines.length ? `\n${lines.join("\n")}` : "";
+  return (
+    `Hola${who ? ` ${who}` : ""} 👋 Le comparto el detalle de su fiado en ${store}:` +
+    `${body}\n\nTotal: ${soles(sale.total)}. ¡Gracias por su compra!`
+  );
 }
 
 /** Construye el mensaje de recordatorio según el tono elegido. */

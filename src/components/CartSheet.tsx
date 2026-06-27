@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useCartStore, cartRawTotal } from "@/stores/cart.store";
+import { useCartStore, cartTotal, itemSubtotal } from "@/stores/cart.store";
 import { useInventoryStore } from "@/stores/inventory.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { BottomSheet } from "@/components/BottomSheet";
 import { WeightInputModal } from "@/components/WeightInputModal";
 import { soles, unitLabel, unitShort, formatQty } from "@/lib/format";
@@ -24,9 +25,10 @@ export function CartSheet({ visible, onClose, onCheckout }: Props) {
   const setWeight = useCartStore((s) => s.setWeight);
   const remove = useCartStore((s) => s.remove);
   const categories = useInventoryStore((s) => s.categories);
+  const roundWeighted = useAuthStore((s) => s.store?.round_weighted ?? false);
   const [weightEdit, setWeightEdit] = useState<{ product: Product; qty: number } | null>(null);
 
-  const total = cartRawTotal(items);
+  const total = cartTotal(items, roundWeighted);
 
   // Si se retira el último ítem con el carrito abierto, cierra la hoja.
   useEffect(() => {
@@ -50,7 +52,7 @@ export function CartSheet({ visible, onClose, onCheckout }: Props) {
             const { product, quantity } = item;
             const icon = categories.find((c) => c.id === product.category_id)?.icon ?? "📦";
             const isWeight = product.unit !== "unit";
-            const subtotal = product.sale_price * quantity;
+            const subtotal = itemSubtotal(item, roundWeighted);
 
             return (
               <View key={product.id} style={s.row}>

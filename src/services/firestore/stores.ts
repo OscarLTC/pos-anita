@@ -15,7 +15,14 @@ const fromFirestore = (id: string, data: DocumentData): Store => ({
   owner_id: data.owner_id,
   currency: data.currency ?? "PEN",
   default_min_margin: data.default_min_margin ?? 0.2,
-  rounding_methods: data.rounding_methods ?? ["cash", "yape", "plin", "card"],
+  round_weighted: data.round_weighted ?? false,
+  ruc: data.ruc ?? undefined,
+  phone: data.phone ?? undefined,
+  address: data.address ?? undefined,
+  district: data.district ?? undefined,
+  open_time: data.open_time ?? undefined,
+  close_time: data.close_time ?? undefined,
+  logo_url: data.logo_url ?? undefined,
   created_at: data.created_at?.toDate() ?? new Date(),
 });
 
@@ -39,6 +46,7 @@ export const storeService = {
       owner_id: userId,
       currency: "PEN",
       default_min_margin: 0.2,
+      round_weighted: false,
       created_at: serverTimestamp(),
     });
 
@@ -48,7 +56,7 @@ export const storeService = {
       owner_id: userId,
       currency: "PEN",
       default_min_margin: 0.2,
-      rounding_methods: ["cash"],
+      round_weighted: false,
       created_at: new Date(),
     };
   },

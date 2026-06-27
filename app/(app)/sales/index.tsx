@@ -17,7 +17,7 @@ import { useInventoryStore } from "@/stores/inventory.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSalesStore } from "@/stores/sales.store";
 import { useClientsStore } from "@/stores/clients.store";
-import { useCartStore, cartRawTotal, cartTotal, roundToCash } from "@/stores/cart.store";
+import { useCartStore, cartTotal, itemSubtotal } from "@/stores/cart.store";
 import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { WeightInputModal } from "@/components/WeightInputModal";
 import { CartSheet } from "@/components/CartSheet";
@@ -78,8 +78,9 @@ export default function VenderScreen() {
     [products, selectedCategoryId, searchQuery],
   );
 
+  const roundWeighted = store?.round_weighted ?? false;
   const cartCount = items.length;
-  const cartAmount = cartRawTotal(items);
+  const cartAmount = cartTotal(items, roundWeighted);
 
   const handleProductPress = (product: Product) => {
     if (product.unit !== "unit") {
@@ -128,23 +129,20 @@ export default function VenderScreen() {
 
   // --- Flujo de cobro ---
   const openPayment = () => {
-    setCheckoutTotal(cartRawTotal(items));
+    setCheckoutTotal(cartTotal(items, roundWeighted));
     setCartVisible(false);
     setTimeout(() => setPaymentVisible(true), 320);
   };
 
-  const saleItems = (applies: boolean): SaleItem[] =>
-    items.map((item) => {
-      const raw = item.product.sale_price * item.quantity;
-      return {
-        product_id: item.product.id,
-        product_name: item.product.name,
-        unit: item.product.unit,
-        quantity: item.quantity,
-        unit_price: item.product.sale_price,
-        subtotal: parseFloat((applies ? roundToCash(raw) : raw).toFixed(2)),
-      };
-    });
+  const saleItems = (): SaleItem[] =>
+    items.map((item) => ({
+      product_id: item.product.id,
+      product_name: item.product.name,
+      unit: item.product.unit,
+      quantity: item.quantity,
+      unit_price: item.product.sale_price,
+      subtotal: parseFloat(itemSubtotal(item, roundWeighted).toFixed(2)),
+    }));
 
   const handleSelectMethod = async (method: PaymentMethod) => {
     if (method.kind === "credit") {
@@ -155,13 +153,12 @@ export default function VenderScreen() {
     if (!store?.id || items.length === 0) return;
 
     const paymentType = method.id as PaymentType;
-    const applies = store.rounding_methods?.includes(paymentType) ?? false;
-    const effective = cartTotal(items, applies);
+    const effective = cartTotal(items, roundWeighted);
 
     setRegistering(true);
     try {
       await createSale(store.id, {
-        items: saleItems(applies),
+        items: saleItems(),
         total: parseFloat(effective.toFixed(2)),
         payment_type: paymentType,
       });
@@ -177,9 +174,9 @@ export default function VenderScreen() {
 
   const doFiar = async (client: Client) => {
     if (!store?.id || items.length === 0) return;
-    const total = cartRawTotal(items);
+    const total = cartTotal(items, roundWeighted);
     await createSale(store.id, {
-      items: saleItems(false),
+      items: saleItems(),
       total: parseFloat(total.toFixed(2)),
       payment_type: "credit",
       client_id: client.id,

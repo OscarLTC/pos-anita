@@ -67,6 +67,23 @@ export const cashRegisterService = {
     }
   },
 
+  /** Revierte una venta de la caja del día (al anularla). No crea la caja si no existe. */
+  async reverseSale(
+    store_id: string,
+    date: string,
+    total: number,
+    payment_type: PaymentType,
+  ): Promise<void> {
+    const ref = doc(db, "cash_registers", registerId(store_id, date));
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    await updateDoc(ref, {
+      total_sales: increment(-total),
+      [`total_${payment_type}`]: increment(-total),
+      sales_count: increment(-1),
+    });
+  },
+
   async close(store_id: string, date: string): Promise<void> {
     const id = registerId(store_id, date);
     await updateDoc(doc(db, "cash_registers", id), {
