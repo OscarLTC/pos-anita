@@ -7,75 +7,137 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Correo del token en minúsculas (los invites/miembros guardan el correo normalizado).
+    function tokenEmail() {
+      return signedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : "";
+    }
+
     // El doc id de un store es el uid de su dueño.
-    function ownsStore(storeId) {
-      return signedIn() && request.auth.uid == storeId;
+    function isOwner(storeId) {
+      return signedIn() && uid() == storeId;
     }
 
-    // El usuario es dueño del dato cuando store_id == su uid.
-    function ownsExisting() {
-      return signedIn() && resource.data.store_id == request.auth.uid;
+    function memberDoc(storeId) {
+      return /databases/$(database)/documents/store_members/$(storeId + '_' + uid());
     }
 
-    function ownsIncoming() {
-      return signedIn() && request.resource.data.store_id == request.auth.uid;
+    function isMember(storeId) {
+      return signedIn() && exists(memberDoc(storeId));
     }
 
-    // Cada usuario solo puede leer/escribir su propio store.
+    function memberRole(storeId) {
+      return get(memberDoc(storeId)).data.role;
+    }
+
+    // Dueño o miembro activo: puede leer/escribir los datos de la tienda.
+    function canAccess(storeId) {
+      return isOwner(storeId) || isMember(storeId);
+    }
+
+    // Gerente o dueña: además pueden editar precios y ver reportes.
+    function isManagerUp(storeId) {
+      return isOwner(storeId) || (isMember(storeId) && memberRole(storeId) in ['owner', 'manager']);
+    }
+
+    function accessExisting() {
+      return signedIn() && canAccess(resource.data.store_id);
+    }
+
+    function accessIncoming() {
+      return signedIn() && canAccess(request.resource.data.store_id);
+    }
+
+    // --- Tienda: la lee cualquier miembro; solo la dueña la edita (datos/preferencias). ---
     match /stores/{storeId} {
-      allow read, write: if ownsStore(storeId);
+      allow read: if isOwner(storeId) || isMember(storeId);
+      allow write: if isOwner(storeId);
     }
 
-    // Colecciones scopeadas por store_id.
+    // --- Miembros activos. Doc id = `${storeId}_${uid}`. ---
+    match /store_members/{id} {
+      // El propio usuario (para resolver su acceso) o cualquier miembro de la tienda.
+      allow read: if signedIn() &&
+        (resource.data.user_id == uid() || canAccess(resource.data.store_id));
+
+      // La dueña agrega miembros, o el usuario reclama su propia invitación.
+      allow create: if isOwner(request.resource.data.store_id)
+        || (signedIn()
+            && id == request.resource.data.store_id + '_' + uid()
+            && request.resource.data.user_id == uid()
+            && request.resource.data.email == tokenEmail()
+            && exists(/databases/$(database)/documents/store_invites/$(request.resource.data.store_id + '_' + tokenEmail())));
+
+      // La dueña cambia roles; el propio usuario solo actualiza su last_active.
+      allow update: if isOwner(resource.data.store_id)
+        || (resource.data.user_id == uid()
+            && request.resource.data.role == resource.data.role);
+
+      allow delete: if isOwner(resource.data.store_id);
+    }
+
+    // --- Invitaciones pendientes. Doc id = `${storeId}_${email}`. ---
+    match /store_invites/{id} {
+      allow read: if isOwner(resource.data.store_id) || resource.data.email == tokenEmail();
+      allow create, update: if isOwner(request.resource.data.store_id);
+      // La dueña cancela; el invitado la borra al reclamarla.
+      allow delete: if isOwner(resource.data.store_id) || resource.data.email == tokenEmail();
+    }
+
+    // --- Colecciones scopeadas por store_id (acceso por membresía). ---
     match /products/{id} {
-      allow read, delete: if ownsExisting();
-      allow create: if ownsIncoming();
-      allow update: if ownsExisting() && ownsIncoming();
+      allow read, delete: if accessExisting();
+      allow create: if accessIncoming();
+      allow update: if accessExisting() && accessIncoming();
     }
 
     match /categories/{id} {
-      allow read, delete: if ownsExisting();
-      allow create: if ownsIncoming();
-      allow update: if ownsExisting() && ownsIncoming();
+      allow read, delete: if accessExisting();
+      allow create: if accessIncoming();
+      allow update: if accessExisting() && accessIncoming();
     }
 
     match /sales/{id} {
-      allow read, delete: if ownsExisting();
-      allow create: if ownsIncoming();
-      allow update: if ownsExisting() && ownsIncoming();
+      allow read, delete: if accessExisting();
+      allow create: if accessIncoming();
+      allow update: if accessExisting() && accessIncoming();
     }
 
     match /price_history/{id} {
-      allow read, delete: if ownsExisting();
-      allow create: if ownsIncoming();
-      allow update: if ownsExisting() && ownsIncoming();
+      allow read, delete: if accessExisting();
+      allow create: if accessIncoming();
+      allow update: if accessExisting() && accessIncoming();
     }
 
     match /cash_registers/{id} {
-      // La caja del día se consulta antes de existir (primera venta): se permite
-      // leer un doc inexistente (devuelve null) además del propio.
-      allow read: if signedIn() && (resource == null || resource.data.store_id == request.auth.uid);
-      allow delete: if ownsExisting();
-      allow create: if ownsIncoming();
-      allow update: if ownsExisting() && ownsIncoming();
+      // La caja del día se consulta antes de existir (primera venta).
+      allow read: if signedIn() && (resource == null || canAccess(resource.data.store_id));
+      allow delete: if accessExisting();
+      allow create: if accessIncoming();
+      allow update: if accessExisting() && accessIncoming();
     }
 
     match /clients/{id} {
-      allow read, delete: if ownsExisting();
-      allow create: if ownsIncoming();
-      allow update: if ownsExisting() && ownsIncoming();
+      allow read, delete: if accessExisting();
+      allow create: if accessIncoming();
+      allow update: if accessExisting() && accessIncoming();
     }
 
     // Ledger de movimientos de stock: append-only (no update/delete).
     match /stock_movements/{id} {
-      allow read: if ownsExisting();
-      allow create: if ownsIncoming();
+      allow read: if accessExisting();
+      allow create: if accessIncoming();
     }
 
-    // Abonos de fiados: append-only (no update; delete permitido al dueño).
+    // Abonos de fiados: append-only (delete permitido a miembros).
     match /payments/{id} {
-      allow read, delete: if ownsExisting();
-      allow create: if ownsIncoming();
+      allow read, delete: if accessExisting();
+      allow create: if accessIncoming();
     }
 
     // Todo lo demás queda denegado por defecto.

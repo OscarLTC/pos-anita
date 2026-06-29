@@ -20,7 +20,7 @@ export default function RootLayout() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        await loadStore(firebaseUser.uid);
+        await loadStore(firebaseUser);
       }
     });
     return unsubscribe;

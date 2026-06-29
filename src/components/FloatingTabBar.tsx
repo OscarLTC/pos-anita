@@ -2,6 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useAuthStore } from "@/stores/auth.store";
+import { capabilitiesFor } from "@/lib/permissions";
 import { colors, spacing, radius, fontFamilies, shadows } from "@/theme";
 
 type TabConfig = {
@@ -21,8 +23,12 @@ const TABS: Record<string, TabConfig> = {
 
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const role = useAuthStore((s) => s.role);
+  const canViewReports = capabilitiesFor(role).viewReports;
   const focusedKey = state.routes[state.index].key;
-  const items = state.routes.filter((route) => route.name in TABS);
+  const items = state.routes.filter(
+    (route) => route.name in TABS && (route.name !== "reportes" || canViewReports),
+  );
 
   return (
     <View

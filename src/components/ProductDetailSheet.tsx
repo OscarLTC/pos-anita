@@ -31,9 +31,11 @@ interface Props {
   product: Product | null;
   onClose: () => void;
   onEdit: (product: Product) => void;
+  /** Si es false (cajero), oculta editar precios y eliminar; deja ver y ajustar stock. */
+  canEdit?: boolean;
 }
 
-export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props) {
+export function ProductDetailSheet({ visible, product, onClose, onEdit, canEdit = true }: Props) {
   const { store } = useAuthStore();
   const categories = useInventoryStore((s) => s.categories);
   const adjustStock = useInventoryStore((s) => s.adjustStock);
@@ -124,13 +126,15 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
           </View>
 
           <View style={s.productRow}>
-            <TouchableOpacity onPress={() => onEdit(p)} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => onEdit(p)} activeOpacity={0.8} disabled={!canEdit}>
               <View style={[s.avatar, { backgroundColor: withAlpha(color, 0.2) }]}>
                 <Text style={s.avatarIcon}>{category?.icon ?? "📦"}</Text>
               </View>
-              <View style={s.editBadge}>
-                <Feather name="edit-2" size={11} color={colors.primaryInk} />
-              </View>
+              {canEdit && (
+                <View style={s.editBadge}>
+                  <Feather name="edit-2" size={11} color={colors.primaryInk} />
+                </View>
+              )}
             </TouchableOpacity>
             <View style={s.productInfo}>
               <Text style={s.productName} numberOfLines={1}>
@@ -239,14 +243,16 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
           </ScrollView>
 
           <View style={s.footer}>
-            <TouchableOpacity
-              style={[s.editBtn, busy && s.saveDisabled]}
-              onPress={() => onEdit(p)}
-              disabled={busy}
-            >
-              <Feather name="edit-2" size={16} color={colors.ink} />
-              <Text style={s.editText}>Editar</Text>
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                style={[s.editBtn, busy && s.saveDisabled]}
+                onPress={() => onEdit(p)}
+                disabled={busy}
+              >
+                <Feather name="edit-2" size={16} color={colors.ink} />
+                <Text style={s.editText}>Editar</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={[s.saveBtn, busy && s.saveDisabled]}
               onPress={handleSave}
@@ -261,22 +267,24 @@ export function ProductDetailSheet({ visible, product, onClose, onEdit }: Props)
             </TouchableOpacity>
           </View>
 
-          {/* Eliminar — acción destructiva terciaria, siempre visible */}
-          <TouchableOpacity
-            style={s.deleteBtn}
-            onPress={handleDelete}
-            disabled={busy}
-            activeOpacity={0.7}
-          >
-            {deleting ? (
-              <ActivityIndicator size="small" color={colors.danger} />
-            ) : (
-              <>
-                <FontAwesome6 name="trash-alt" size={16} color={colors.danger} />
-                <Text style={s.deleteText}>Eliminar producto</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {/* Eliminar — acción destructiva terciaria, solo para quien edita precios. */}
+          {canEdit && (
+            <TouchableOpacity
+              style={s.deleteBtn}
+              onPress={handleDelete}
+              disabled={busy}
+              activeOpacity={0.7}
+            >
+              {deleting ? (
+                <ActivityIndicator size="small" color={colors.danger} />
+              ) : (
+                <>
+                  <FontAwesome6 name="trash-alt" size={16} color={colors.danger} />
+                  <Text style={s.deleteText}>Eliminar producto</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </BottomSheet>

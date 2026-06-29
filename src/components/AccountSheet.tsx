@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Switch, Alert } f
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { BusinessInfoSheet } from "@/components/BusinessInfoSheet";
+import { UsersSheet } from "@/components/UsersSheet";
 import { useAuthStore } from "@/stores/auth.store";
 import { initials } from "@/lib/format";
+import { capabilitiesFor, type Capabilities } from "@/lib/permissions";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 
 interface Props {
@@ -13,13 +15,17 @@ interface Props {
   onLogout: () => void;
 }
 
+type Page = "cuenta" | "biz" | "users";
+
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle: string;
   accent?: boolean;
-  /** Marca la opción que abre la hoja de datos del negocio. */
-  biz?: boolean;
+  /** Página a la que navega (si no, muestra "Próximamente"). */
+  page?: Exclude<Page, "cuenta">;
+  /** Capacidad requerida para mostrar la opción. */
+  need?: keyof Capabilities;
 }
 
 const MENU: MenuItem[] = [
@@ -27,9 +33,16 @@ const MENU: MenuItem[] = [
     icon: "document-text-outline",
     title: "Datos del negocio",
     subtitle: "Nombre, RUC, dirección",
-    biz: true,
+    page: "biz",
+    need: "editBusiness",
   },
-  { icon: "people-outline", title: "Usuarios y permisos", subtitle: "Cajeros, gerencia" },
+  {
+    icon: "people-outline",
+    title: "Usuarios y permisos",
+    subtitle: "Cajeros, gerencia",
+    page: "users",
+    need: "manageUsers",
+  },
   { icon: "notifications-outline", title: "Notificaciones", subtitle: "WhatsApp, recordatorios" },
   { icon: "print-outline", title: "Impresoras y tickets", subtitle: "Configura tu impresora" },
   { icon: "star", title: "Suscripción", subtitle: "Plan gratis · sube a Pro", accent: true },
@@ -40,18 +53,22 @@ const soon = () => Alert.alert("Próximamente", "Esta opción estará disponible
 export function AccountSheet({ visible, onClose, onLogout }: Props) {
   const user = useAuthStore((s) => s.user);
   const store = useAuthStore((s) => s.store);
+  const role = useAuthStore((s) => s.role);
   const updateStore = useAuthStore((s) => s.updateStore);
+
+  const caps = capabilitiesFor(role);
+  const menu = MENU.filter((item) => !item.need || caps[item.need]);
 
   const name = user?.displayName || store?.name || user?.email?.split("@")[0] || "Mi cuenta";
   const email = user?.email ?? "";
 
-  const [bizOpen, setBizOpen] = useState(false);
+  const [page, setPage] = useState<Page>("cuenta");
   // Al cerrar del todo la hoja, vuelve siempre a la página de Cuenta.
   useEffect(() => {
-    if (!visible) setBizOpen(false);
+    if (!visible) setPage("cuenta");
   }, [visible]);
 
-  const handleClose = () => (bizOpen ? setBizOpen(false) : onClose());
+  const handleClose = () => (page !== "cuenta" ? setPage("cuenta") : onClose());
 
   // Toggle optimista del redondeo; revierte si falla el guardado.
   const [round, setRound] = useState(store?.round_weighted ?? false);
@@ -68,9 +85,11 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
   };
 
   return (
-    <BottomSheet visible={visible} onClose={handleClose} maxHeightRatio={bizOpen ? 0.95 : 0.9}>
-      {bizOpen ? (
-        <BusinessInfoSheet onBack={() => setBizOpen(false)} />
+    <BottomSheet visible={visible} onClose={handleClose} maxHeightRatio={page === "cuenta" ? 0.9 : 0.95}>
+      {page === "biz" ? (
+        <BusinessInfoSheet onBack={() => setPage("cuenta")} />
+      ) : page === "users" ? (
+        <UsersSheet onBack={() => setPage("cuenta")} />
       ) : (
         <View style={s.sheet}>
           <View style={s.handle} />
@@ -101,7 +120,7 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
 
           <TouchableOpacity
             style={s.bizCard}
-            onPress={() => setBizOpen(true)}
+            onPress={() => (caps.editBusiness ? setPage("biz") : soon())}
             activeOpacity={0.8}
           >
             <View style={s.bizIcon}>
@@ -117,29 +136,31 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
             <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
           </TouchableOpacity>
 
-          <View>
-            <Text style={s.sectionLabel}>PREFERENCIAS DE VENTA</Text>
-            <View style={s.prefCard}>
-              <View style={s.prefInfo}>
-                <Text style={s.prefTitle}>Redondear precios por peso</Text>
-                <Text style={s.prefSub}>Los productos por kg/L se redondean a S/ 0.10</Text>
+          {caps.editBusiness && (
+            <View>
+              <Text style={s.sectionLabel}>PREFERENCIAS DE VENTA</Text>
+              <View style={s.prefCard}>
+                <View style={s.prefInfo}>
+                  <Text style={s.prefTitle}>Redondear precios por peso</Text>
+                  <Text style={s.prefSub}>Los productos por kg/L se redondean a S/ 0.10</Text>
+                </View>
+                <Switch
+                  value={round}
+                  onValueChange={toggleRound}
+                  trackColor={{ false: colors.surfaceMuted, true: colors.primary }}
+                  thumbColor="#fff"
+                  ios_backgroundColor={colors.surfaceMuted}
+                />
               </View>
-              <Switch
-                value={round}
-                onValueChange={toggleRound}
-                trackColor={{ false: colors.surfaceMuted, true: colors.primary }}
-                thumbColor="#fff"
-                ios_backgroundColor={colors.surfaceMuted}
-              />
             </View>
-          </View>
+          )}
 
           <View style={s.menu}>
-            {MENU.map((item, i) => (
+            {menu.map((item, i) => (
               <TouchableOpacity
                 key={item.title}
                 style={[s.menuRow, i > 0 && s.menuDivider]}
-                onPress={() => (item.biz ? setBizOpen(true) : soon())}
+                onPress={() => (item.page ? setPage(item.page) : soon())}
                 activeOpacity={0.7}
               >
                 <View style={[s.menuIcon, item.accent && s.menuIconAccent]}>

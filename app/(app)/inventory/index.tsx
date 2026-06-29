@@ -12,10 +12,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useInventoryStore } from "@/stores/inventory.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { BarcodeScannerModal } from "@/components/BarcodeScannerModal";
 import { CategoriesSheet } from "@/components/CategoriesSheet";
 import { NewProductSheet } from "@/components/NewProductSheet";
 import { ProductDetailSheet } from "@/components/ProductDetailSheet";
+import { capabilitiesFor } from "@/lib/permissions";
 import { soles, formatQty } from "@/lib/format";
 import { withAlpha } from "@/lib/colors";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
@@ -25,6 +27,8 @@ const stockUnitWord = (unit: string) => (unit === "kg" ? "kg" : unit === "l" ? "
 
 export default function InventoryScreen() {
   const { products, categories, is_loading } = useInventoryStore();
+  const role = useAuthStore((s) => s.role);
+  const canEdit = capabilitiesFor(role).editPrices;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -116,9 +120,11 @@ export default function InventoryScreen() {
         <TouchableOpacity style={s.iconBtn} onPress={() => setCategoriesVisible(true)}>
           <Ionicons name="grid-outline" size={20} color={colors.ink} />
         </TouchableOpacity>
-        <TouchableOpacity style={s.addBtn} onPress={() => setProductForm({ product: null })}>
-          <Ionicons name="add" size={24} color={colors.primaryInk} />
-        </TouchableOpacity>
+        {canEdit && (
+          <TouchableOpacity style={s.addBtn} onPress={() => setProductForm({ product: null })}>
+            <Ionicons name="add" size={24} color={colors.primaryInk} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={s.stats}>
@@ -207,6 +213,7 @@ export default function InventoryScreen() {
       <ProductDetailSheet
         visible={detail != null}
         product={detail}
+        canEdit={canEdit}
         onClose={() => setDetail(null)}
         onEdit={(product) => {
           setDetail(null);

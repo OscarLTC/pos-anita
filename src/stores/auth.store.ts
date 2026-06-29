@@ -11,7 +11,8 @@ import {
 } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { storeService } from "@/services/firestore/stores";
-import type { Store, UpdateStoreInput } from "@/types";
+import { memberService } from "@/services/firestore/members";
+import type { MemberRole, Store, UpdateStoreInput } from "@/types";
 
 /** Error de app: la cuenta existe pero solo tiene proveedor Google (sin contraseña). */
 export const GOOGLE_ACCOUNT_ONLY = "auth/google-account-only";
@@ -19,8 +20,10 @@ export const GOOGLE_ACCOUNT_ONLY = "auth/google-account-only";
 interface AuthState {
   user: User | null | undefined;
   store: Store | null | undefined;
+  /** Rol del usuario en la tienda cargada (null mientras resuelve / sin sesión). */
+  role: MemberRole | null;
   setUser: (user: User | null) => void;
-  loadStore: (userId: string) => Promise<void>;
+  loadStore: (user: User) => Promise<void>;
   updateStore: (input: UpdateStoreInput) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -32,22 +35,27 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: undefined,
   store: undefined,
+  role: null,
 
   setUser: (user) => {
     if (!user) {
-      set({ user: null, store: null });
+      set({ user: null, store: null, role: null });
     } else {
-      set({ user, store: undefined });
+      set({ user, store: undefined, role: null });
     }
   },
 
-  loadStore: async (userId) => {
+  loadStore: async (user) => {
     try {
-      const store = await storeService.ensureExists(userId);
-      set({ store });
+      const { store, role } = await memberService.resolveAccess({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+      });
+      set({ store, role });
     } catch (error) {
       console.error("Error cargando tienda:", error);
-      set({ store: null });
+      set({ store: null, role: null });
     }
   },
 

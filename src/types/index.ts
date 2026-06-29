@@ -102,6 +102,36 @@ export type UpdateStoreInput = Partial<
 
 export type PaymentType = "cash" | "yape" | "plin" | "card" | "credit";
 
+// --- Usuarios y permisos ---
+
+/** Roles dentro de una tienda. owner = Dueña, manager = Gerente, cashier = Cajero. */
+export type MemberRole = "owner" | "manager" | "cashier";
+
+/** Miembro activo de una tienda. Doc id = `${store_id}_${user_id}`. */
+export interface StoreMember {
+  id: string;
+  store_id: string;
+  user_id: string;
+  email: string;
+  name?: string;
+  role: MemberRole;
+  joined_at: Date;
+  last_active_at?: Date;
+}
+
+/** Invitación pendiente (el usuario aún no inicia sesión). Doc id = `${store_id}_${email}`. */
+export interface StoreInvite {
+  id: string;
+  store_id: string;
+  email: string;
+  /** Solo manager o cashier; la dueña no se invita. */
+  role: Exclude<MemberRole, "owner">;
+  invited_at: Date;
+  invited_by?: string;
+}
+
+export type InviteRole = Exclude<MemberRole, "owner">;
+
 export interface Client {
   id: string;
   store_id: string;

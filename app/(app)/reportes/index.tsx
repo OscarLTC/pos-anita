@@ -22,6 +22,7 @@ import { buildSummary, type ReportPeriod, type ChartBar } from "@/lib/reports";
 import { soles, initials, formatQty, unitShort } from "@/lib/format";
 import { firstName, saleReceiptMessage } from "@/lib/fiados";
 import { openWhatsApp } from "@/lib/whatsapp";
+import { capabilitiesFor } from "@/lib/permissions";
 import { PAYMENT_UI } from "@/config/payment-methods";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { Sale } from "@/types";
@@ -47,8 +48,9 @@ const SALES_TITLE: Record<ReportPeriod, string> = {
 const MAX_SALES_ROWS = 50;
 
 export default function ReportesScreen() {
-  const { store, logout } = useAuthStore();
+  const { store, logout, role } = useAuthStore();
   const storeId = store?.id;
+  const canViewReports = capabilitiesFor(role).viewReports;
 
   const sales = useReportsStore((s) => s.sales);
   const isLoading = useReportsStore((s) => s.is_loading);
@@ -134,6 +136,19 @@ export default function ReportesScreen() {
 
   const fiadoTitle = period === "today" ? "FIADO DEL DÍA" : "FIADO";
   const peakTitle = period === "today" ? "HORA PICO" : "DÍA PICO";
+
+  if (!canViewReports) {
+    return (
+      <SafeAreaView style={s.safe} edges={["top"]}>
+        <View style={s.center}>
+          <Ionicons name="lock-closed-outline" size={40} color={colors.inkSoft} />
+          <Text style={[s.emptyText, { marginTop: spacing.md }]}>
+            Tu rol no tiene acceso a reportes
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
