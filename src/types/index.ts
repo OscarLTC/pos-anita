@@ -22,6 +22,7 @@ export interface Store {
   close_time?: string;
   logo_url?: string;
   notifications?: NotificationSettings;
+  tickets?: TicketSettings;
   created_at: Date;
 }
 
@@ -99,8 +100,21 @@ export type UpdateStoreInput = Partial<
     | "close_time"
     | "logo_url"
     | "notifications"
+    | "tickets"
   >
 >;
+
+/** Tamaño de papel del ticket. */
+export type TicketSize = "58mm" | "80mm" | "A4";
+
+/** Preferencias de impresión de comprobantes. */
+export interface TicketSettings {
+  size: TicketSize;
+  /** Imprime un segundo ticket para el cliente. */
+  print_client_copy: boolean;
+  /** Mensaje al pie del ticket. */
+  footer_message: string;
+}
 
 /** Preferencias de notificaciones de la tienda. */
 export interface NotificationSettings {

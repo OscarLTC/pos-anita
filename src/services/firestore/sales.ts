@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   writeBatch,
   increment,
+  getCountFromServer,
   Timestamp,
   type DocumentData,
 } from "firebase/firestore";
@@ -147,6 +148,21 @@ export const saleService = {
     );
     const snap = await getDocs(q);
     return snap.docs.map((d) => fromFirestore(d.id, d.data()));
+  },
+
+  /** Cuenta (agregación) las ventas completadas en un rango. */
+  async countByRange(store_id: string, start: Date, end: Date): Promise<number> {
+    // Mismo orderBy que getByRange para reutilizar el índice (store_id, status, created_at DESC).
+    const q = query(
+      col,
+      where("store_id", "==", store_id),
+      where("status", "==", "completed"),
+      where("created_at", ">=", Timestamp.fromDate(start)),
+      where("created_at", "<=", Timestamp.fromDate(end)),
+      orderBy("created_at", "desc"),
+    );
+    const snap = await getCountFromServer(q);
+    return snap.data().count;
   },
 
   async getById(id: string): Promise<Sale | null> {

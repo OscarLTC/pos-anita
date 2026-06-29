@@ -58,11 +58,32 @@ como "Próximamente".
 
 ## 5. Placeholders "Próximamente" (hoja Cuenta) 🚧
 
-Opciones que existen visualmente pero aún no hacen nada:
+_(Ya no quedan placeholders vacíos en la hoja Cuenta; ver puntos específicos abajo.)_
 
-- **Reimprimir** (detalle de venta) → requiere integración de impresora de tickets.
-- **Impresoras y tickets** → configuración de impresora.
-- **Suscripción** → "Plan gratis · sube a Pro" (sin planes/pagos todavía).
+## 5d. Suscripción — cobro / billing 💳
+
+La **pantalla de Suscripción ya está hecha**: muestra el plan Gratis con **uso real**
+(productos, usuarios, ventas/mes, clientes con fiado vs. límites) y la tarjeta de
+Caserita Pro. Falta lo de cobrar:
+
+- **"Probar 30 días gratis"** y **"plan Negocio"** son placeholders ("Próximamente").
+- Integrar **billing**: Stripe (web) o **In-App Purchases** (App Store / Play) — RevenueCat
+  simplifica ambos. Requiere backend + cuentas de pago.
+- Persistir el **plan activo** en el `Store` (hoy es "Gratis" fijo) y **aplicar los
+  límites** de verdad (bloquear al superar 50 productos / 3 usuarios / etc. en plan Gratis).
+- Límites y precio en [`src/config/plans.ts`](../../src/config/plans.ts).
+
+## 5c. Impresión de tickets — integración nativa 🖨️
+
+La **pantalla de Impresoras y tickets ya está hecha**: tamaño, copia para el cliente,
+mensaje al pie y **vista previa en vivo** (persisten en `Store.tickets`). Falta el hardware:
+
+- **Conectar impresora** térmica (USB/Bluetooth ESC/POS) — necesita librería nativa
+  (ej. `react-native-ble-plx` / módulo ESC/POS) + build nativo.
+- **Imprimir prueba** y **Reimprimir** (detalle de venta) — hoy son placeholders.
+- **Imprimir al cobrar** usando `Store.tickets` (tamaño, copia, pie) + los datos del
+  negocio. El builder de la vista previa (`src/lib/receipt.ts`) ya tiene el formato base
+  para reutilizar al generar el comando ESC/POS real.
 
 ## 5b. Notificaciones — disparo real 🔔
 

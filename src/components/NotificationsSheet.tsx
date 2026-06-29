@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/stores/auth.store";
 import { DEFAULT_NOTIFICATIONS, REMINDER_DAYS } from "@/lib/notifications";
@@ -23,6 +24,7 @@ interface Props {
 export function NotificationsSheet({ onBack }: Props) {
   const store = useAuthStore((s) => s.store);
   const updateStore = useAuthStore((s) => s.updateStore);
+  const insets = useSafeAreaInsets();
 
   const [n, setN] = useState<NotificationSettings>(store?.notifications ?? DEFAULT_NOTIFICATIONS);
   const [saving, setSaving] = useState(false);
@@ -42,7 +44,7 @@ export function NotificationsSheet({ onBack }: Props) {
   };
 
   return (
-    <View style={s.sheet}>
+    <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
       <View style={s.handle} />
 
       <TouchableOpacity style={s.back} onPress={onBack} hitSlop={8} disabled={saving}>

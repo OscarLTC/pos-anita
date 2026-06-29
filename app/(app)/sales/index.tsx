@@ -234,7 +234,6 @@ export default function VenderScreen() {
     const category = categories.find((c) => c.id === item.category_id);
     const swatch = category?.color ?? "#929C94";
     const qty = items.find((i) => i.product.id === item.id)?.quantity ?? 0;
-    const lowStock = item.stock <= item.min_stock;
     const isWeight = item.unit !== "unit";
 
     return (
@@ -252,15 +251,10 @@ export default function VenderScreen() {
           <Text style={s.cardName} numberOfLines={1}>
             {item.name}
           </Text>
-          <View style={s.cardMetaRow}>
-            {lowStock && (
-              <Ionicons name="warning" size={12} color={colors.danger} style={s.warnIcon} />
-            )}
-            <Text style={[s.cardMeta, lowStock && s.cardMetaLow]} numberOfLines={1}>
-              stock {item.stock}
-              {category ? ` · ${category.name}` : ""}
-            </Text>
-          </View>
+          <Text style={s.cardMeta} numberOfLines={1}>
+            stock {item.stock}
+            {category ? ` · ${category.name}` : ""}
+          </Text>
         </View>
 
         <Text style={s.cardPrice}>
@@ -577,20 +571,9 @@ const s = StyleSheet.create({
     fontFamily: fontFamilies.display,
     color: colors.ink,
   },
-  cardMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  warnIcon: {
-    marginTop: 1,
-  },
   cardMeta: {
     ...typography.bodySm,
     color: colors.inkSoft,
-  },
-  cardMetaLow: {
-    color: colors.danger,
   },
   cardPrice: {
     ...typography.body,

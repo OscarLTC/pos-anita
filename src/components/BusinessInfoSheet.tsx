@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/stores/auth.store";
 import { colors, spacing, radius, typography, fontSize, fontFamilies } from "@/theme";
@@ -27,6 +28,7 @@ const soon = () => Alert.alert("Próximamente", "La carga del logo estará dispo
 export function BusinessInfoSheet({ onBack }: Props) {
   const store = useAuthStore((s) => s.store);
   const updateStore = useAuthStore((s) => s.updateStore);
+  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState(store?.name ?? "");
   const [ruc, setRuc] = useState(store?.ruc ?? "");
@@ -61,7 +63,7 @@ export function BusinessInfoSheet({ onBack }: Props) {
   };
 
   return (
-    <View style={s.sheet}>
+    <View style={[s.sheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
       <View style={s.handle} />
 
         <TouchableOpacity style={s.back} onPress={onBack} hitSlop={8} disabled={saving}>

@@ -44,6 +44,9 @@ export const colors = {
   accent: "#F2C744", // Amarillo suave
   accentInk: "#0E1410", // Texto sobre accent
 
+  suscription: "#FCF3DB",
+  suscriptionStar: "#F2C744",
+
   success: "#0E5E3E",
   danger: "#C04032",
   info: "#2B5FB8",

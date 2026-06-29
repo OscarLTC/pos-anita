@@ -5,6 +5,8 @@ import { BottomSheet } from "@/components/BottomSheet";
 import { BusinessInfoSheet } from "@/components/BusinessInfoSheet";
 import { UsersSheet } from "@/components/UsersSheet";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
+import { TicketsSheet } from "@/components/TicketsSheet";
+import { SubscriptionSheet } from "@/components/SubscriptionSheet";
 import { useAuthStore } from "@/stores/auth.store";
 import { initials } from "@/lib/format";
 import { capabilitiesFor, type Capabilities } from "@/lib/permissions";
@@ -16,7 +18,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type Page = "cuenta" | "biz" | "users" | "notifs";
+type Page = "cuenta" | "biz" | "users" | "notifs" | "tickets" | "sub";
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -51,8 +53,21 @@ const MENU: MenuItem[] = [
     page: "notifs",
     need: "editBusiness",
   },
-  { icon: "print-outline", title: "Impresoras y tickets", subtitle: "Configura tu impresora" },
-  { icon: "star", title: "Suscripción", subtitle: "Plan gratis · sube a Pro", accent: true },
+  {
+    icon: "print-outline",
+    title: "Impresoras y tickets",
+    subtitle: "Configura tu impresora",
+    page: "tickets",
+    need: "editBusiness",
+  },
+  {
+    icon: "star",
+    title: "Suscripción",
+    subtitle: "Plan gratis · sube a Pro",
+    accent: true,
+    page: "sub",
+    need: "editBusiness",
+  },
 ];
 
 const soon = () => Alert.alert("Próximamente", "Esta opción estará disponible pronto.");
@@ -92,109 +107,117 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
   };
 
   return (
-    <BottomSheet visible={visible} onClose={handleClose} maxHeightRatio={page === "cuenta" ? 0.9 : 0.95}>
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      maxHeightRatio={page === "cuenta" ? 0.9 : 0.95}
+    >
       {page === "biz" ? (
         <BusinessInfoSheet onBack={() => setPage("cuenta")} />
       ) : page === "users" ? (
         <UsersSheet onBack={() => setPage("cuenta")} />
       ) : page === "notifs" ? (
         <NotificationsSheet onBack={() => setPage("cuenta")} />
+      ) : page === "tickets" ? (
+        <TicketsSheet onBack={() => setPage("cuenta")} />
+      ) : page === "sub" ? (
+        <SubscriptionSheet onBack={() => setPage("cuenta")} />
       ) : (
         <View style={s.sheet}>
           <View style={s.handle} />
 
-        <View style={s.header}>
-          <Text style={s.title}>Cuenta</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.ink} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
-          <View style={s.profile}>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{initials(name)}</Text>
-            </View>
-            <View style={s.profileInfo}>
-              <Text style={s.name} numberOfLines={1}>
-                {name}
-              </Text>
-              {!!email && (
-                <Text style={s.email} numberOfLines={1}>
-                  {email}
-                </Text>
-              )}
-            </View>
+          <View style={s.header}>
+            <Text style={s.title}>Cuenta</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={8}>
+              <Ionicons name="close" size={24} color={colors.ink} />
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={s.bizCard}
-            onPress={() => (caps.editBusiness ? setPage("biz") : soon())}
-            activeOpacity={0.8}
-          >
-            <View style={s.bizIcon}>
-              <Ionicons name="storefront" size={22} color={colors.primaryInk} />
-            </View>
-            <View style={s.bizInfo}>
-              <Text style={s.bizEyebrow}>NEGOCIO</Text>
-              <Text style={s.bizName} numberOfLines={1}>
-                {store?.name ?? "Mi negocio"}
-              </Text>
-              <Text style={s.bizSub}>Lima · Plan gratis</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
-          </TouchableOpacity>
-
-          {caps.editBusiness && (
-            <View>
-              <Text style={s.sectionLabel}>PREFERENCIAS DE VENTA</Text>
-              <View style={s.prefCard}>
-                <View style={s.prefInfo}>
-                  <Text style={s.prefTitle}>Redondear precios por peso</Text>
-                  <Text style={s.prefSub}>Los productos por kg/L se redondean a S/ 0.10</Text>
-                </View>
-                <Switch
-                  value={round}
-                  onValueChange={toggleRound}
-                  trackColor={{ false: colors.surfaceMuted, true: colors.primary }}
-                  thumbColor="#fff"
-                  ios_backgroundColor={colors.surfaceMuted}
-                />
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
+            <View style={s.profile}>
+              <View style={s.avatar}>
+                <Text style={s.avatarText}>{initials(name)}</Text>
+              </View>
+              <View style={s.profileInfo}>
+                <Text style={s.name} numberOfLines={1}>
+                  {name}
+                </Text>
+                {!!email && (
+                  <Text style={s.email} numberOfLines={1}>
+                    {email}
+                  </Text>
+                )}
               </View>
             </View>
-          )}
 
-          <View style={s.menu}>
-            {menu.map((item, i) => (
-              <TouchableOpacity
-                key={item.title}
-                style={[s.menuRow, i > 0 && s.menuDivider]}
-                onPress={() => (item.page ? setPage(item.page) : soon())}
-                activeOpacity={0.7}
-              >
-                <View style={[s.menuIcon, item.accent && s.menuIconAccent]}>
-                  <Ionicons
-                    name={item.icon}
-                    size={18}
-                    color={item.accent ? colors.accentInk : colors.inkMid}
+            <TouchableOpacity
+              style={s.bizCard}
+              onPress={() => (caps.editBusiness ? setPage("biz") : soon())}
+              activeOpacity={0.8}
+            >
+              <View style={s.bizIcon}>
+                <Ionicons name="storefront" size={22} color={colors.primaryInk} />
+              </View>
+              <View style={s.bizInfo}>
+                <Text style={s.bizEyebrow}>NEGOCIO</Text>
+                <Text style={s.bizName} numberOfLines={1}>
+                  {store?.name ?? "Mi negocio"}
+                </Text>
+                <Text style={s.bizSub}>Lima · Plan gratis</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
+            </TouchableOpacity>
+
+            {caps.editBusiness && (
+              <View>
+                <Text style={s.sectionLabel}>PREFERENCIAS DE VENTA</Text>
+                <View style={s.prefCard}>
+                  <View style={s.prefInfo}>
+                    <Text style={s.prefTitle}>Redondear precios por peso</Text>
+                    <Text style={s.prefSub}>Los productos por kg/L se redondean a S/ 0.10</Text>
+                  </View>
+                  <Switch
+                    value={round}
+                    onValueChange={toggleRound}
+                    trackColor={{ false: colors.surfaceMuted, true: colors.primary }}
+                    thumbColor="#fff"
+                    ios_backgroundColor={colors.surfaceMuted}
                   />
                 </View>
-                <View style={s.menuInfo}>
-                  <Text style={s.menuTitle}>{item.title}</Text>
-                  <Text style={s.menuSub}>{item.subtitle}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.inkSoft} />
-              </TouchableOpacity>
-            ))}
-          </View>
+              </View>
+            )}
 
-          <TouchableOpacity style={s.logoutBtn} onPress={onLogout} activeOpacity={0.7}>
-            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-            <Text style={s.logoutText}>Cerrar sesión</Text>
-          </TouchableOpacity>
+            <View style={s.menu}>
+              {menu.map((item, i) => (
+                <TouchableOpacity
+                  key={item.title}
+                  style={[s.menuRow, i > 0 && s.menuDivider]}
+                  onPress={() => (item.page ? setPage(item.page) : soon())}
+                  activeOpacity={0.7}
+                >
+                  <View style={[s.menuIcon, item.accent && s.menuIconAccent]}>
+                    <Ionicons
+                      name={item.icon}
+                      size={18}
+                      color={item.accent ? colors.accent : colors.inkMid}
+                    />
+                  </View>
+                  <View style={s.menuInfo}>
+                    <Text style={s.menuTitle}>{item.title}</Text>
+                    <Text style={s.menuSub}>{item.subtitle}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.inkSoft} />
+                </TouchableOpacity>
+              ))}
+            </View>
 
-          <Text style={s.footer}>Caserita · v0.9 (beta)</Text>
-        </ScrollView>
+            <TouchableOpacity style={s.logoutBtn} onPress={onLogout} activeOpacity={0.7}>
+              <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+              <Text style={s.logoutText}>Cerrar sesión</Text>
+            </TouchableOpacity>
+
+            <Text style={s.footer}>Caserita · v0.9 (beta)</Text>
+          </ScrollView>
         </View>
       )}
     </BottomSheet>
@@ -239,7 +262,12 @@ const s = StyleSheet.create({
   },
   avatarText: { color: colors.accentInk, fontFamily: fontFamilies.display, fontSize: fontSize.lg },
   profileInfo: { flex: 1, gap: 2 },
-  name: { fontFamily: fontFamilies.display, fontSize: fontSize.xl, color: colors.ink, letterSpacing: -0.3 },
+  name: {
+    fontFamily: fontFamilies.display,
+    fontSize: fontSize.xl,
+    color: colors.ink,
+    letterSpacing: -0.3,
+  },
   email: { ...typography.bodySm, color: colors.inkSoft },
 
   bizCard: {
@@ -294,7 +322,12 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     ...shadows.shadow,
   },
-  menuRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md },
+  menuRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+  },
   menuDivider: { borderTopWidth: 1, borderTopColor: colors.border },
   menuIcon: {
     width: 36,
@@ -304,7 +337,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  menuIconAccent: { backgroundColor: colors.accent },
+  menuIconAccent: { backgroundColor: colors.suscription },
   menuInfo: { flex: 1, gap: 1 },
   menuTitle: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
   menuSub: { ...typography.bodySm, color: colors.inkSoft },
