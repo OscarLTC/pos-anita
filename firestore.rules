@@ -11,13 +11,6 @@ service cloud.firestore {
       return request.auth.uid;
     }
 
-    // Correo del token en minúsculas (los invites/miembros guardan el correo normalizado).
-    function tokenEmail() {
-      return signedIn() && request.auth.token.email != null
-        ? request.auth.token.email.lower()
-        : "";
-    }
-
     // El doc id de un store es el uid de su dueño.
     function isOwner(storeId) {
       return signedIn() && uid() == storeId;
@@ -59,19 +52,25 @@ service cloud.firestore {
       allow write: if isOwner(storeId);
     }
 
+    function invitePath(token) {
+      return /databases/$(database)/documents/store_invites/$(token);
+    }
+
     // --- Miembros activos. Doc id = `${storeId}_${uid}`. ---
     match /store_members/{id} {
       // El propio usuario (para resolver su acceso) o cualquier miembro de la tienda.
       allow read: if signedIn() &&
         (resource.data.user_id == uid() || canAccess(resource.data.store_id));
 
-      // La dueña agrega miembros, o el usuario reclama su propia invitación.
+      // La dueña agrega su propia membresía, o el invitado acepta vía token: la
+      // membresía referencia el invite_token y debe coincidir tienda + rol.
       allow create: if isOwner(request.resource.data.store_id)
         || (signedIn()
             && id == request.resource.data.store_id + '_' + uid()
             && request.resource.data.user_id == uid()
-            && request.resource.data.email == tokenEmail()
-            && exists(/databases/$(database)/documents/store_invites/$(request.resource.data.store_id + '_' + tokenEmail())));
+            && exists(invitePath(request.resource.data.invite_token))
+            && get(invitePath(request.resource.data.invite_token)).data.store_id == request.resource.data.store_id
+            && get(invitePath(request.resource.data.invite_token)).data.role == request.resource.data.role);
 
       // La dueña cambia roles; el propio usuario solo actualiza su last_active.
       allow update: if isOwner(resource.data.store_id)
@@ -81,12 +80,14 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.store_id);
     }
 
-    // --- Invitaciones pendientes. Doc id = `${storeId}_${email}`. ---
-    match /store_invites/{id} {
-      allow read: if isOwner(resource.data.store_id) || resource.data.email == tokenEmail();
+    // --- Invitaciones. Doc id = token aleatorio (secreto del link). ---
+    match /store_invites/{token} {
+      // get por token (aceptar): cualquier sesión con el link. list: solo la dueña.
+      allow get: if signedIn();
+      allow list: if isOwner(resource.data.store_id);
       allow create, update: if isOwner(request.resource.data.store_id);
-      // La dueña cancela; el invitado la borra al reclamarla.
-      allow delete: if isOwner(resource.data.store_id) || resource.data.email == tokenEmail();
+      // La dueña cancela; el invitado la consume al aceptar (ya es miembro).
+      allow delete: if isOwner(resource.data.store_id) || isMember(resource.data.store_id);
     }
 
     // --- Colecciones scopeadas por store_id (acceso por membresía). ---

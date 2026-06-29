@@ -8,7 +8,7 @@ interface MembersState {
   invites: StoreInvite[];
   is_loading: boolean;
   load: (store_id: string) => Promise<void>;
-  invite: (store_id: string, email: string, role: InviteRole) => Promise<void>;
+  invite: (store_id: string, email: string, role: InviteRole) => Promise<StoreInvite>;
   changeMemberRole: (member: StoreMember, role: MemberRole) => Promise<void>;
   changeInviteRole: (invite: StoreInvite, role: InviteRole) => Promise<void>;
   removeMember: (member: StoreMember) => Promise<void>;
@@ -47,20 +47,18 @@ export const useMembersStore = create<MembersState>((set, get) => ({
   },
 
   invite: async (store_id, email, role) => {
-    const invited_by = useAuthStore.getState().user?.uid ?? "";
-    await memberService.invite(store_id, email, role, invited_by);
-    set((s) => {
-      const id = `${store_id}_${email.trim().toLowerCase()}`;
-      const invite: StoreInvite = {
-        id,
-        store_id,
-        email: email.trim().toLowerCase(),
-        role,
-        invited_at: new Date(),
-        invited_by,
-      };
-      return { invites: [...s.invites.filter((i) => i.id !== id), invite] };
-    });
+    const auth = useAuthStore.getState();
+    const invited_by = auth.user?.uid ?? "";
+    const store_name = auth.store?.name ?? "Mi negocio";
+    const invite = await memberService.invite(
+      store_id,
+      store_name,
+      role,
+      invited_by,
+      email || undefined,
+    );
+    set((s) => ({ invites: [...s.invites, invite] }));
+    return invite;
   },
 
   changeMemberRole: async (member, role) => {

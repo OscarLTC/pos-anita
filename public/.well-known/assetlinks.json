@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.oscarltc.posanita",
+      "sha256_cert_fingerprints": ["REEMPLAZA_CON_TU_SHA256_DE_FIRMA"]
+    }
+  }
+]

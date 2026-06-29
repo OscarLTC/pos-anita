@@ -20,7 +20,6 @@ const invitesCol = collection(db, "store_invites");
 
 const memberId = (store_id: string, user_id: string) => `${store_id}_${user_id}`;
 const normEmail = (email: string) => email.trim().toLowerCase();
-const inviteId = (store_id: string, email: string) => `${store_id}_${normEmail(email)}`;
 
 const memberFrom = (id: string, d: DocumentData): StoreMember => ({
   id,
@@ -36,7 +35,8 @@ const memberFrom = (id: string, d: DocumentData): StoreMember => ({
 const inviteFrom = (id: string, d: DocumentData): StoreInvite => ({
   id,
   store_id: d.store_id,
-  email: d.email,
+  store_name: d.store_name ?? "",
+  email: d.email ?? undefined,
   role: d.role,
   invited_at: d.invited_at?.toDate() ?? new Date(),
   invited_by: d.invited_by ?? undefined,
@@ -84,15 +84,70 @@ export const memberService = {
     });
   },
 
-  /** Crea/actualiza una invitación pendiente. */
-  async invite(store_id: string, email: string, role: InviteRole, invited_by: string): Promise<void> {
-    await setDoc(doc(invitesCol, inviteId(store_id, email)), {
+  /**
+   * Crea una invitación con token aleatorio (el id del doc) y la devuelve.
+   * El token es el secreto del link `posanita://invite/{token}`.
+   */
+  async invite(
+    store_id: string,
+    store_name: string,
+    role: InviteRole,
+    invited_by: string,
+    email?: string,
+  ): Promise<StoreInvite> {
+    const ref = doc(invitesCol);
+    const normalized = email ? normEmail(email) : null;
+    await setDoc(ref, {
       store_id,
-      email: normEmail(email),
+      store_name,
+      email: normalized,
       role,
       invited_at: serverTimestamp(),
       invited_by,
     });
+    return {
+      id: ref.id,
+      store_id,
+      store_name,
+      email: normalized ?? undefined,
+      role,
+      invited_at: new Date(),
+      invited_by,
+    };
+  },
+
+  /** Lee una invitación por token (para la pantalla de aceptación). */
+  async getInvite(token: string): Promise<StoreInvite | null> {
+    const snap = await getDoc(doc(invitesCol, token));
+    if (!snap.exists()) return null;
+    return inviteFrom(snap.id, snap.data());
+  },
+
+  /**
+   * Acepta una invitación: crea la membresía (las reglas la autorizan con el token)
+   * y consume la invitación. La tienda se lee DESPUÉS de unirse (recién entonces
+   * el usuario tiene permiso de lectura).
+   */
+  async acceptInvite(token: string, user: SessionUser): Promise<Access | null> {
+    const snap = await getDoc(doc(invitesCol, token));
+    if (!snap.exists()) return null;
+    const invite = inviteFrom(snap.id, snap.data());
+
+    await setDoc(doc(membersCol, memberId(invite.store_id, user.uid)), {
+      store_id: invite.store_id,
+      user_id: user.uid,
+      email: user.email ? normEmail(user.email) : "",
+      name: user.displayName ?? null,
+      role: invite.role,
+      invite_token: token,
+      joined_at: serverTimestamp(),
+      last_active_at: serverTimestamp(),
+    });
+    await deleteDoc(doc(invitesCol, token)).catch(() => {});
+
+    const store = await storeService.getById(invite.store_id);
+    if (!store) return null;
+    return { store, role: invite.role };
   },
 
   async cancelInvite(invite: StoreInvite): Promise<void> {
@@ -114,7 +169,8 @@ export const memberService = {
   /**
    * Resuelve a qué tienda y con qué rol entra el usuario al iniciar sesión:
    * 1) si es dueño de una tienda (stores/{uid}); 2) si es miembro de otra;
-   * 3) si tiene una invitación pendiente (la reclama); 4) si no, crea su tienda.
+   * 3) si no, crea su propia tienda. Las invitaciones se aceptan aparte, por link
+   * (acceptInvite), no automáticamente al iniciar sesión.
    *
    * El orden preserva el comportamiento previo: los dueños existentes resuelven
    * en el paso 1 exactamente igual que antes.
@@ -133,28 +189,6 @@ export const memberService = {
       if (store) {
         this.touch(member.id);
         return { store, role: member.role };
-      }
-    }
-
-    if (user.email) {
-      const email = normEmail(user.email);
-      const invSnap = await getDocs(query(invitesCol, where("email", "==", email)));
-      if (!invSnap.empty) {
-        const invite = inviteFrom(invSnap.docs[0].id, invSnap.docs[0].data());
-        const store = await storeService.getById(invite.store_id);
-        if (store) {
-          await setDoc(doc(membersCol, memberId(store.id, user.uid)), {
-            store_id: store.id,
-            user_id: user.uid,
-            email,
-            name: user.displayName ?? null,
-            role: invite.role,
-            joined_at: serverTimestamp(),
-            last_active_at: serverTimestamp(),
-          });
-          await deleteDoc(doc(invitesCol, invite.id)).catch(() => {});
-          return { store, role: invite.role };
-        }
       }
     }
 

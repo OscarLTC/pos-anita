@@ -119,11 +119,17 @@ export interface StoreMember {
   last_active_at?: Date;
 }
 
-/** Invitación pendiente (el usuario aún no inicia sesión). Doc id = `${store_id}_${email}`. */
+/**
+ * Invitación pendiente. El doc id es un token aleatorio: es el secreto del link
+ * `posanita://invite/{token}`. `store_name` va denormalizado para mostrarlo en la
+ * pantalla de aceptación sin necesidad de leer la tienda (aún no es miembro).
+ */
 export interface StoreInvite {
   id: string;
   store_id: string;
-  email: string;
+  store_name: string;
+  /** A quién se pensó invitar (opcional, informativo). El link sirve para cualquier cuenta. */
+  email?: string;
   /** Solo manager o cashier; la dueña no se invita. */
   role: Exclude<MemberRole, "owner">;
   invited_at: Date;

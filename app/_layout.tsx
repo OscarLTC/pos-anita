@@ -7,6 +7,7 @@ import { useFonts } from "expo-font";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import { useAuthStore } from "@/stores/auth.store";
+import { useInviteStore } from "@/stores/invite.store";
 import { fontAssets, useThemeStore } from "@/theme";
 
 export default function RootLayout() {
@@ -32,11 +33,18 @@ export default function RootLayout() {
 
     const inAuthGroup = segments[0] === "(auth)";
     const inAppGroup = segments[0] === "(app)";
+    // La pantalla de invitación se gestiona sola (login/aceptar), no la redirigimos.
+    const inInvite = segments[0] === "invite";
+    const pendingInvite = useInviteStore.getState().token;
 
-    if (!user && !inAuthGroup) {
+    if (!user && !inAuthGroup && !inInvite) {
       router.replace("/(auth)/login");
-    } else if (user && store && !inAppGroup) {
-      router.replace("/(app)/sales");
+    } else if (user && store) {
+      if (pendingInvite && !inInvite) {
+        router.replace(`/invite/${pendingInvite}`);
+      } else if (!inAppGroup && !inInvite) {
+        router.replace("/(app)/sales");
+      }
     }
   }, [user, store, segments]);
 

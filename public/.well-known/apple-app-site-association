@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REEMPLAZA_APPLE_TEAM_ID.com.oscarltc.posanita"],
+        "components": [
+          {
+            "/": "/invite/*",
+            "comment": "Links de invitación de usuarios"
+          }
+        ]
+      }
+    ]
+  }
+}

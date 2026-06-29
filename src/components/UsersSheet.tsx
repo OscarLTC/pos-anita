@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Share,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/stores/auth.store";
@@ -15,8 +16,22 @@ import { useMembersStore } from "@/stores/members.store";
 import { initials, avatarColor } from "@/lib/format";
 import { isValidEmail } from "@/lib/auth-errors";
 import { ROLE_LABEL, ROLE_COLOR } from "@/lib/permissions";
+import { inviteLink } from "@/lib/links";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { InviteRole, StoreInvite, StoreMember } from "@/types";
+
+/** Abre el menú nativo de Compartir con el link de la invitación. */
+async function shareInvite(invite: StoreInvite) {
+  const link = inviteLink(invite.id);
+  const message =
+    `Te invito a ${invite.store_name} en Caserita como ${ROLE_LABEL[invite.role]}. ` +
+    `Abre este link para unirte:\n${link}`;
+  try {
+    await Share.share({ message });
+  } catch {
+    // El usuario canceló el panel de compartir; sin acción.
+  }
+}
 
 interface Props {
   onBack: () => void;
@@ -85,10 +100,11 @@ export function UsersSheet({ onBack }: Props) {
     }
     setSaving(true);
     try {
-      await sendInvite(storeId, value, role);
+      const invite = await sendInvite(storeId, value, role);
       setEmail("");
       setRole("cashier");
       setInviting(false);
+      await shareInvite(invite);
     } catch {
       Alert.alert("Error", "No se pudo enviar la invitación. Intenta de nuevo.");
     } finally {
@@ -126,7 +142,8 @@ export function UsersSheet({ onBack }: Props) {
   const inviteMenu = useCallback(
     (inv: StoreInvite) => {
       const toRole: InviteRole = inv.role === "cashier" ? "manager" : "cashier";
-      Alert.alert(inv.email, "Invitación pendiente", [
+      Alert.alert(inv.email ?? "Invitación", "Invitación pendiente", [
+        { text: "Compartir link de nuevo", onPress: () => shareInvite(inv) },
         {
           text: `Hacer ${ROLE_LABEL[toRole]}`,
           onPress: () => changeInviteRole(inv, toRole).catch(() => {}),
@@ -206,18 +223,24 @@ export function UsersSheet({ onBack }: Props) {
               );
             })}
 
-            {invites.map((inv) => (
+            {invites.map((inv) => {
+              const label = inv.email ? inv.email.split("@")[0] : "Invitación";
+              return (
               <View key={inv.id} style={s.card}>
-                <View style={[s.avatar, { backgroundColor: avatarColor(inv.email) }]}>
-                  <Text style={s.avatarText}>{initials(inv.email.split("@")[0])}</Text>
+                <View style={[s.avatar, { backgroundColor: avatarColor(inv.email ?? inv.id) }]}>
+                  <Text style={s.avatarText}>
+                    {inv.email ? initials(label) : <Ionicons name="link" size={18} color="#fff" />}
+                  </Text>
                 </View>
                 <View style={s.cardInfo}>
                   <Text style={s.name} numberOfLines={1}>
-                    {inv.email.split("@")[0]}
+                    {label}
                   </Text>
-                  <Text style={s.email} numberOfLines={1}>
-                    {inv.email}
-                  </Text>
+                  {!!inv.email && (
+                    <Text style={s.email} numberOfLines={1}>
+                      {inv.email}
+                    </Text>
+                  )}
                   <View style={s.metaRow}>
                     <View style={[s.roleChip, { backgroundColor: ROLE_COLOR[inv.role] + "22" }]}>
                       <Text style={[s.roleText, { color: ROLE_COLOR[inv.role] }]}>
@@ -231,7 +254,8 @@ export function UsersSheet({ onBack }: Props) {
                   <Ionicons name="ellipsis-horizontal" size={20} color={colors.inkSoft} />
                 </TouchableOpacity>
               </View>
-            ))}
+              );
+            })}
 
             {inviting ? (
               <View style={s.inviteCard}>
