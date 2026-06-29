@@ -27,6 +27,7 @@ import { FiarSheet } from "@/components/FiarSheet";
 import { NewClientSheet } from "@/components/NewClientSheet";
 import type { PaymentMethod } from "@/config/payment-methods";
 import { soles, unitLabel } from "@/lib/format";
+import { playCobroSound } from "@/lib/sound";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { Client, CreateClientInput, PaymentType, Product, SaleItem } from "@/types";
 import { withAlpha } from "@/lib/colors";
@@ -162,6 +163,7 @@ export default function VenderScreen() {
         total: parseFloat(effective.toFixed(2)),
         payment_type: paymentType,
       });
+      if (store.notifications?.sound_on_sale) playCobroSound();
       clearCart();
       setPaymentVisible(false);
       setTimeout(() => setSuccess({ kind: "sale", total: effective, label: method.label }), 320);

@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { BusinessInfoSheet } from "@/components/BusinessInfoSheet";
 import { UsersSheet } from "@/components/UsersSheet";
+import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { useAuthStore } from "@/stores/auth.store";
 import { initials } from "@/lib/format";
 import { capabilitiesFor, type Capabilities } from "@/lib/permissions";
@@ -15,7 +16,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type Page = "cuenta" | "biz" | "users";
+type Page = "cuenta" | "biz" | "users" | "notifs";
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -43,7 +44,13 @@ const MENU: MenuItem[] = [
     page: "users",
     need: "manageUsers",
   },
-  { icon: "notifications-outline", title: "Notificaciones", subtitle: "WhatsApp, recordatorios" },
+  {
+    icon: "notifications-outline",
+    title: "Notificaciones",
+    subtitle: "WhatsApp, recordatorios",
+    page: "notifs",
+    need: "editBusiness",
+  },
   { icon: "print-outline", title: "Impresoras y tickets", subtitle: "Configura tu impresora" },
   { icon: "star", title: "Suscripción", subtitle: "Plan gratis · sube a Pro", accent: true },
 ];
@@ -90,6 +97,8 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
         <BusinessInfoSheet onBack={() => setPage("cuenta")} />
       ) : page === "users" ? (
         <UsersSheet onBack={() => setPage("cuenta")} />
+      ) : page === "notifs" ? (
+        <NotificationsSheet onBack={() => setPage("cuenta")} />
       ) : (
         <View style={s.sheet}>
           <View style={s.handle} />

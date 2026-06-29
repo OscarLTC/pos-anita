@@ -21,6 +21,7 @@ export interface Store {
   open_time?: string;
   close_time?: string;
   logo_url?: string;
+  notifications?: NotificationSettings;
   created_at: Date;
 }
 
@@ -97,8 +98,28 @@ export type UpdateStoreInput = Partial<
     | "open_time"
     | "close_time"
     | "logo_url"
+    | "notifications"
   >
 >;
+
+/** Preferencias de notificaciones de la tienda. */
+export interface NotificationSettings {
+  /** Recordatorios automáticos por WhatsApp a clientes con deuda. */
+  debt_reminders: boolean;
+  /** Cada cuántos días recordar (3 | 5 | 7 | 10). */
+  debt_reminder_days: number;
+  /** Avisar cuando un producto llega al stock mínimo. */
+  low_stock: boolean;
+  /** Avisar cuando una venta supera un monto. */
+  big_sale: boolean;
+  big_sale_amount: number;
+  /** Resumen del día al cerrar caja. */
+  daily_summary: boolean;
+  /** Hora de envío del resumen "HH:MM". */
+  daily_summary_time: string;
+  /** Reproducir un sonido al registrar un cobro. */
+  sound_on_sale: boolean;
+}
 
 export type PaymentType = "cash" | "yape" | "plin" | "card" | "credit";
 

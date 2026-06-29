@@ -7,6 +7,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
+import { DEFAULT_NOTIFICATIONS } from "@/lib/notifications";
 import type { Store, UpdateStoreInput } from "@/types";
 
 const fromFirestore = (id: string, data: DocumentData): Store => ({
@@ -23,6 +24,7 @@ const fromFirestore = (id: string, data: DocumentData): Store => ({
   open_time: data.open_time ?? undefined,
   close_time: data.close_time ?? undefined,
   logo_url: data.logo_url ?? undefined,
+  notifications: { ...DEFAULT_NOTIFICATIONS, ...(data.notifications ?? {}) },
   created_at: data.created_at?.toDate() ?? new Date(),
 });
 

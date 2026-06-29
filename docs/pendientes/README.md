@@ -62,8 +62,19 @@ Opciones que existen visualmente pero aún no hacen nada:
 
 - **Reimprimir** (detalle de venta) → requiere integración de impresora de tickets.
 - **Impresoras y tickets** → configuración de impresora.
-- **Notificaciones** → WhatsApp / recordatorios.
 - **Suscripción** → "Plan gratis · sube a Pro" (sin planes/pagos todavía).
+
+## 5b. Notificaciones — disparo real 🔔
+
+La **pantalla de preferencias ya está hecha** y persiste en el `Store`; **"Sonido al
+cobrar" ya funciona** (local, expo-audio). Falta que las alertas se **disparen** de verdad:
+
+- **Recordatorios automáticos** (WhatsApp a deudores cada X días) → trabajo programado
+  en backend (Cloud Functions + cron). Relacionado con el punto 2 (envío de correo).
+- **Alerta de stock bajo / Venta grande / Resumen diario** → push notifications
+  (`expo-notifications` + backend que las dispare; el resumen necesita cron al cerrar caja).
+- Las preferencias (`Store.notifications`) ya guardan qué está activo, frecuencia, monto y
+  hora; el backend solo tendría que leerlas.
 
 ---
 
