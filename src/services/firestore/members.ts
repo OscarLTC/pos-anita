@@ -167,33 +167,47 @@ export const memberService = {
   },
 
   /**
-   * Resuelve a qué tienda y con qué rol entra el usuario al iniciar sesión:
-   * 1) si es dueño de una tienda (stores/{uid}); 2) si es miembro de otra;
-   * 3) si no, crea su propia tienda. Las invitaciones se aceptan aparte, por link
-   * (acceptInvite), no automáticamente al iniciar sesión.
+   * Todas las tiendas a las que el usuario tiene acceso, con su rol en cada una.
+   * Es la base del modelo multi-tienda: un usuario puede ser dueño de la suya y
+   * a la vez cajero/gerente en otras. NO crea ninguna tienda (ver createOwnStore).
    *
-   * El orden preserva el comportamiento previo: los dueños existentes resuelven
-   * en el paso 1 exactamente igual que antes.
+   * Incluye un backfill: si posee una tienda (stores/{uid}) sin registro de
+   * membresía (tiendas creadas antes de este modelo), lo agrega al vuelo.
    */
-  async resolveAccess(user: SessionUser): Promise<Access> {
-    const owned = await storeService.getById(user.uid);
-    if (owned) {
-      this.touch(memberId(owned.id, user.uid));
-      return { store: owned, role: "owner" };
+  async listAccess(user: SessionUser): Promise<Access[]> {
+    const snap = await getDocs(query(membersCol, where("user_id", "==", user.uid)));
+    const accesses: Access[] = [];
+    const seen = new Set<string>();
+
+    for (const d of snap.docs) {
+      const member = memberFrom(d.id, d.data());
+      if (seen.has(member.store_id)) continue;
+      const store = await storeService.getById(member.store_id);
+      if (!store) continue;
+      accesses.push({ store, role: member.role });
+      seen.add(member.store_id);
+      this.touch(member.id);
     }
 
-    const mineSnap = await getDocs(query(membersCol, where("user_id", "==", user.uid)));
-    if (!mineSnap.empty) {
-      const member = memberFrom(mineSnap.docs[0].id, mineSnap.docs[0].data());
-      const store = await storeService.getById(member.store_id);
-      if (store) {
-        this.touch(member.id);
-        return { store, role: member.role };
+    if (!seen.has(user.uid)) {
+      const owned = await storeService.getById(user.uid);
+      if (owned) {
+        await this.ensureOwnerMembership(owned, user).catch(() => {});
+        accesses.push({ store: owned, role: "owner" });
       }
     }
 
+    return accesses;
+  },
+
+  /**
+   * Crea (si no existe) la tienda propia del usuario y su membresía de dueña.
+   * Se usa como fallback cuando el usuario no pertenece a ninguna tienda.
+   */
+  async createOwnStore(user: SessionUser): Promise<Access> {
     const created = await storeService.ensureExists(user.uid);
     await this.ensureOwnerMembership(created, user);
+    this.touch(memberId(created.id, user.uid));
     return { store: created, role: "owner" };
   },
 

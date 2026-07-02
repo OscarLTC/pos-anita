@@ -15,6 +15,7 @@ export default function InviteScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const loadStore = useAuthStore((s) => s.loadStore);
+  const switchStore = useAuthStore((s) => s.switchStore);
   const setPending = useInviteStore((s) => s.setToken);
   const clearPending = useInviteStore((s) => s.clear);
 
@@ -63,7 +64,9 @@ export default function InviteScreen() {
         return;
       }
       clearPending();
+      // Recarga las tiendas y deja como activa la que se acaba de aceptar.
       await loadStore(user);
+      await switchStore(access.store.id);
       router.replace("/(app)/sales");
     } catch {
       setError("No se pudo aceptar la invitación. Intenta de nuevo.");

@@ -91,28 +91,38 @@ service cloud.firestore {
     }
 
     // --- Colecciones scopeadas por store_id (acceso por membresía). ---
+    // Productos: cualquier miembro lee y vende (la venta solo toca stock/updated_at);
+    // crear, borrar y editar precios/datos queda reservado a gerente o dueña.
     match /products/{id} {
-      allow read, delete: if accessExisting();
-      allow create: if accessIncoming();
-      allow update: if accessExisting() && accessIncoming();
+      allow read: if accessExisting();
+      allow create: if accessIncoming() && isManagerUp(request.resource.data.store_id);
+      allow update: if accessExisting() && accessIncoming() && (
+        isManagerUp(resource.data.store_id)
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updated_at'])
+      );
+      allow delete: if isManagerUp(resource.data.store_id);
     }
 
+    // Categorías: las gestiona gerente o dueña; cualquier miembro las lee.
     match /categories/{id} {
-      allow read, delete: if accessExisting();
-      allow create: if accessIncoming();
-      allow update: if accessExisting() && accessIncoming();
+      allow read: if accessExisting();
+      allow create: if accessIncoming() && isManagerUp(request.resource.data.store_id);
+      allow update: if accessExisting() && accessIncoming() && isManagerUp(resource.data.store_id);
+      allow delete: if isManagerUp(resource.data.store_id);
     }
 
+    // Ventas: cualquier miembro vende (create) y consulta (read, p.ej. fiados);
+    // anularlas o borrarlas es acción de gerente o dueña.
     match /sales/{id} {
-      allow read, delete: if accessExisting();
+      allow read: if accessExisting();
       allow create: if accessIncoming();
-      allow update: if accessExisting() && accessIncoming();
+      allow update, delete: if isManagerUp(resource.data.store_id);
     }
 
+    // Historial de precios: append-only; solo lo genera quien edita precios (gerente/dueña).
     match /price_history/{id} {
-      allow read, delete: if accessExisting();
-      allow create: if accessIncoming();
-      allow update: if accessExisting() && accessIncoming();
+      allow read: if accessExisting();
+      allow create: if accessIncoming() && isManagerUp(request.resource.data.store_id);
     }
 
     match /cash_registers/{id} {

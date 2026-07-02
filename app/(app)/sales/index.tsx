@@ -25,8 +25,9 @@ import { PaymentSheet } from "@/components/PaymentSheet";
 import { SuccessSheet } from "@/components/SuccessSheet";
 import { FiarSheet } from "@/components/FiarSheet";
 import { NewClientSheet } from "@/components/NewClientSheet";
+import { AccountSheet } from "@/components/AccountSheet";
 import type { PaymentMethod } from "@/config/payment-methods";
-import { soles, unitLabel } from "@/lib/format";
+import { soles, unitLabel, initials } from "@/lib/format";
 import { playCobroSound } from "@/lib/sound";
 import { colors, spacing, radius, typography, fontSize, fontFamilies, shadows } from "@/theme";
 import type { Client, CreateClientInput, PaymentType, Product, SaleItem } from "@/types";
@@ -39,7 +40,7 @@ type SuccessInfo =
 const AVATAR_BG = "rgba(242,199,68,0.20)"; // accent suave (amarillo)
 
 export default function VenderScreen() {
-  const { store } = useAuthStore();
+  const { store, logout } = useAuthStore();
   const { products, categories, is_loading } = useInventoryStore();
   const createSale = useSalesStore((s) => s.createSale);
 
@@ -65,6 +66,14 @@ export default function VenderScreen() {
   const [newClientVisible, setNewClientVisible] = useState(false);
   const [registeringClientId, setRegisteringClientId] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert("Cerrar sesión", "¿Seguro que quieres cerrar sesión?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Cerrar sesión", style: "destructive", onPress: () => logout() },
+    ]);
+  };
 
   const filtered = useMemo(
     () =>
@@ -268,8 +277,17 @@ export default function VenderScreen() {
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <View style={s.header}>
-        <Text style={s.eyebrow}>PUNTO DE VENTA</Text>
-        <Text style={s.title}>Vender</Text>
+        <View>
+          <Text style={s.eyebrow}>PUNTO DE VENTA</Text>
+          <Text style={s.title}>Vender</Text>
+        </View>
+        <TouchableOpacity
+          style={s.accountBtn}
+          onPress={() => setAccountOpen(true)}
+          activeOpacity={0.85}
+        >
+          <Text style={s.accountBtnText}>{initials(store?.name ?? "Mi Tienda")}</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={s.searchRow}>
@@ -422,6 +440,12 @@ export default function VenderScreen() {
         }}
         onClose={() => setWeightModal(null)}
       />
+
+      <AccountSheet
+        visible={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        onLogout={handleLogout}
+      />
     </SafeAreaView>
   );
 }
@@ -441,9 +465,25 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
+  },
+  accountBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accountBtnText: {
+    color: colors.accentInk,
+    fontFamily: fontFamilies.display,
+    fontSize: fontSize.sm,
   },
   eyebrow: {
     ...typography.caption,

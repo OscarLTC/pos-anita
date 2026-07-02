@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Switch, Alert } f
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { BusinessInfoSheet } from "@/components/BusinessInfoSheet";
+import { StoreSwitcherSheet } from "@/components/StoreSwitcherSheet";
 import { UsersSheet } from "@/components/UsersSheet";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { TicketsSheet } from "@/components/TicketsSheet";
@@ -18,7 +19,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type Page = "cuenta" | "biz" | "users" | "notifs" | "tickets" | "sub";
+type Page = "cuenta" | "biz" | "switch" | "users" | "notifs" | "tickets" | "sub";
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -76,7 +77,10 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
   const user = useAuthStore((s) => s.user);
   const store = useAuthStore((s) => s.store);
   const role = useAuthStore((s) => s.role);
+  const memberships = useAuthStore((s) => s.memberships);
   const updateStore = useAuthStore((s) => s.updateStore);
+
+  const multiStore = memberships.length > 1;
 
   const caps = capabilitiesFor(role);
   const menu = MENU.filter((item) => !item.need || caps[item.need]);
@@ -114,6 +118,8 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
     >
       {page === "biz" ? (
         <BusinessInfoSheet onBack={() => setPage("cuenta")} />
+      ) : page === "switch" ? (
+        <StoreSwitcherSheet onBack={() => setPage("cuenta")} />
       ) : page === "users" ? (
         <UsersSheet onBack={() => setPage("cuenta")} />
       ) : page === "notifs" ? (
@@ -168,6 +174,25 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
               <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
             </TouchableOpacity>
 
+            {multiStore && (
+              <TouchableOpacity
+                style={s.switchRow}
+                onPress={() => setPage("switch")}
+                activeOpacity={0.7}
+              >
+                <View style={s.menuIcon}>
+                  <Ionicons name="swap-horizontal" size={18} color={colors.inkMid} />
+                </View>
+                <View style={s.menuInfo}>
+                  <Text style={s.menuTitle}>Cambiar de tienda</Text>
+                  <Text style={s.menuSub}>
+                    {memberships.length} tiendas · estás en {store?.name ?? "—"}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.inkSoft} />
+              </TouchableOpacity>
+            )}
+
             {caps.editBusiness && (
               <View>
                 <Text style={s.sectionLabel}>PREFERENCIAS DE VENTA</Text>
@@ -187,6 +212,7 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
               </View>
             )}
 
+            {menu.length > 0 && (
             <View style={s.menu}>
               {menu.map((item, i) => (
                 <TouchableOpacity
@@ -210,6 +236,7 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
                 </TouchableOpacity>
               ))}
             </View>
+            )}
 
             <TouchableOpacity style={s.logoutBtn} onPress={onLogout} activeOpacity={0.7}>
               <Ionicons name="log-out-outline" size={20} color={colors.danger} />
@@ -314,6 +341,17 @@ const s = StyleSheet.create({
   prefInfo: { flex: 1, gap: 2 },
   prefTitle: { ...typography.body, fontFamily: fontFamilies.display, color: colors.ink },
   prefSub: { ...typography.bodySm, color: colors.inkSoft },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    ...shadows.shadow,
+  },
   menu: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
