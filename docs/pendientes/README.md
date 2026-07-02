@@ -1,7 +1,7 @@
 # Pendientes / Backlog
 
 Cosas que quedaron diferidas, con el contexto para retomarlas sin perder tiempo.
-Última actualización: **2026-06-29**.
+Última actualización: **2026-07-01**.
 
 ---
 
@@ -112,3 +112,25 @@ cobrar" ya funciona** (local, expo-audio). Falta que las alertas se **disparen**
 Los datos del negocio (RUC, dirección, horario, etc.) **se guardan pero aún no se
 imprimen** en boletas ni se inyectan en los mensajes de WhatsApp. Engancharlo cuando se
 trabaje el módulo de boletas/recordatorios.
+
+---
+
+## 8. Eliminar cuenta — hacerlo atómico con Cloud Function 🗑️
+
+La baja de cuenta (**"Eliminar cuenta y negocio"** en la hoja Cuenta, solo dueña) **ya
+funciona** con doble validación (reautenticación por contraseña/Google + escribir el
+nombre del negocio) y borra todo desde el cliente: `storeService.purge` (todas las
+colecciones por `store_id` + miembros/invites + doc de la tienda),
+`memberService.removeAllMembershipsOf` y `deleteUser`.
+
+- **Limitación:** el borrado es **del lado del cliente y en secuencia**. Si se corta a
+  mitad (sin red, muchos docs, timeout) puede quedar **borrado parcial** y hay que
+  reintentar; tampoco es transaccional.
+- **Falta (mejora, requiere plan Blaze):** mover el purgado a una **Cloud Function**
+  (ej. `onCall` o trigger `auth.user().onDelete`) que borre server-side con Admin SDK
+  (ignora las reglas, más rápido y sin límite de permisos). El cliente solo llamaría a la
+  función y luego `deleteUser`. Considerar `firebase-tools` **`firestore:delete` recursivo**
+  o batches de 450 como ya se hace.
+- **Relacionado:** el punto 3 (desplegar reglas) — el borrado desde cliente **depende de
+  las reglas nuevas**: `allow delete` para dueña en `price_history` y `stock_movements`, y
+  auto-baja de membresía en `store_members` (`resource.data.user_id == uid()`).
