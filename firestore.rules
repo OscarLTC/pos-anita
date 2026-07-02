@@ -77,7 +77,9 @@ service cloud.firestore {
         || (resource.data.user_id == uid()
             && request.resource.data.role == resource.data.role);
 
-      allow delete: if isOwner(resource.data.store_id);
+      // La dueña quita miembros; un usuario puede quitarse a sí mismo (dejar la
+      // tienda o al eliminar su cuenta).
+      allow delete: if isOwner(resource.data.store_id) || resource.data.user_id == uid();
     }
 
     // --- Invitaciones. Doc id = token aleatorio (secreto del link). ---
@@ -120,9 +122,11 @@ service cloud.firestore {
     }
 
     // Historial de precios: append-only; solo lo genera quien edita precios (gerente/dueña).
+    // La dueña puede borrarlo (limpieza al eliminar la cuenta).
     match /price_history/{id} {
       allow read: if accessExisting();
       allow create: if accessIncoming() && isManagerUp(request.resource.data.store_id);
+      allow delete: if isOwner(resource.data.store_id);
     }
 
     match /cash_registers/{id} {
@@ -139,10 +143,12 @@ service cloud.firestore {
       allow update: if accessExisting() && accessIncoming();
     }
 
-    // Ledger de movimientos de stock: append-only (no update/delete).
+    // Ledger de movimientos de stock: append-only. La dueña puede borrarlo
+    // (limpieza al eliminar la cuenta).
     match /stock_movements/{id} {
       allow read: if accessExisting();
       allow create: if accessIncoming();
+      allow delete: if isOwner(resource.data.store_id);
     }
 
     // Abonos de fiados: append-only (delete permitido a miembros).

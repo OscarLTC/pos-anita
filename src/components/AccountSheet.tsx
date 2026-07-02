@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { BusinessInfoSheet } from "@/components/BusinessInfoSheet";
 import { StoreSwitcherSheet } from "@/components/StoreSwitcherSheet";
+import { DeleteAccountSheet } from "@/components/DeleteAccountSheet";
 import { UsersSheet } from "@/components/UsersSheet";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { TicketsSheet } from "@/components/TicketsSheet";
@@ -19,7 +20,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type Page = "cuenta" | "biz" | "switch" | "users" | "notifs" | "tickets" | "sub";
+type Page = "cuenta" | "biz" | "switch" | "users" | "notifs" | "tickets" | "sub" | "danger";
 
 interface MenuItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -120,6 +121,8 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
         <BusinessInfoSheet onBack={() => setPage("cuenta")} />
       ) : page === "switch" ? (
         <StoreSwitcherSheet onBack={() => setPage("cuenta")} />
+      ) : page === "danger" ? (
+        <DeleteAccountSheet onBack={() => setPage("cuenta")} />
       ) : page === "users" ? (
         <UsersSheet onBack={() => setPage("cuenta")} />
       ) : page === "notifs" ? (
@@ -242,6 +245,16 @@ export function AccountSheet({ visible, onClose, onLogout }: Props) {
               <Ionicons name="log-out-outline" size={20} color={colors.danger} />
               <Text style={s.logoutText}>Cerrar sesión</Text>
             </TouchableOpacity>
+
+            {role === "owner" && (
+              <TouchableOpacity
+                style={s.dangerBtn}
+                onPress={() => setPage("danger")}
+                activeOpacity={0.7}
+              >
+                <Text style={s.dangerText}>Eliminar cuenta y negocio</Text>
+              </TouchableOpacity>
+            )}
 
             <Text style={s.footer}>Caserita · v0.9 (beta)</Text>
           </ScrollView>
@@ -392,5 +405,12 @@ const s = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   logoutText: { ...typography.body, fontFamily: fontFamilies.display, color: colors.danger },
+  dangerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 44,
+  },
+  dangerText: { ...typography.bodySm, color: colors.danger, textDecorationLine: "underline" },
   footer: { ...typography.caption, color: colors.inkSoft, textAlign: "center" },
 });

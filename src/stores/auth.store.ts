@@ -2,8 +2,11 @@ import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
+  EmailAuthProvider,
   fetchSignInMethodsForEmail,
   GoogleAuthProvider,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -39,6 +42,12 @@ interface AuthState {
   loginWithGoogle: (idToken: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Reautentica con contraseña (requisito de Firebase para operaciones sensibles). */
+  reauthenticateWithPassword: (password: string) => Promise<void>;
+  /** Reautentica con un idToken fresco de Google. */
+  reauthenticateWithGoogle: (idToken: string) => Promise<void>;
+  /** Elimina definitivamente el negocio propio, sus datos y la cuenta del usuario. */
+  deleteAccount: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -122,5 +131,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     await signOut(auth);
+  },
+
+  reauthenticateWithPassword: async (password) => {
+    const current = auth.currentUser;
+    if (!current?.email) throw new Error("no-current-user");
+    const credential = EmailAuthProvider.credential(current.email, password);
+    await reauthenticateWithCredential(current, credential);
+  },
+
+  reauthenticateWithGoogle: async (idToken) => {
+    const current = auth.currentUser;
+    if (!current) throw new Error("no-current-user");
+    const credential = GoogleAuthProvider.credential(idToken);
+    await reauthenticateWithCredential(current, credential);
+  },
+
+  deleteAccount: async () => {
+    const current = auth.currentUser;
+    if (!current) throw new Error("no-current-user");
+    // 1) Quita las membresías del usuario en cualquier tienda.
+    await memberService.removeAllMembershipsOf(current.uid);
+    // 2) Borra el negocio propio y todos sus datos.
+    await storeService.purge(current.uid);
+    // 3) Elimina la cuenta de autenticación (dispara onAuthStateChanged -> null).
+    await deleteUser(current);
   },
 }));

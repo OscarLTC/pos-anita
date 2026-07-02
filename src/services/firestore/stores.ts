@@ -1,8 +1,14 @@
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
+  query,
+  where,
+  writeBatch,
   serverTimestamp,
   type DocumentData,
 } from "firebase/firestore";
@@ -68,4 +74,45 @@ export const storeService = {
   async update(id: string, input: UpdateStoreInput): Promise<void> {
     await updateDoc(doc(db, "stores", id), input);
   },
+
+  /**
+   * Borra TODOS los datos de una tienda: sus colecciones scopeadas por store_id,
+   * sus miembros e invitaciones y, por último, el doc de la tienda. Irreversible.
+   * Se usa al eliminar la cuenta del dueño.
+   */
+  async purge(storeId: string): Promise<void> {
+    const scoped = [
+      "sales",
+      "stock_movements",
+      "price_history",
+      "payments",
+      "cash_registers",
+      "products",
+      "categories",
+      "clients",
+      "store_invites",
+      "store_members",
+    ];
+    for (const name of scoped) {
+      await deleteByStore(name, storeId);
+    }
+    await deleteDoc(doc(db, "stores", storeId));
+  },
 };
+
+/** Borra en lotes todos los docs de una colección cuyo store_id coincide. */
+async function deleteByStore(colName: string, storeId: string): Promise<void> {
+  const snap = await getDocs(query(collection(db, colName), where("store_id", "==", storeId)));
+  // Firestore limita los batches a 500 operaciones; usamos 450 por margen.
+  let batch = writeBatch(db);
+  let count = 0;
+  for (const d of snap.docs) {
+    batch.delete(d.ref);
+    if (++count === 450) {
+      await batch.commit();
+      batch = writeBatch(db);
+      count = 0;
+    }
+  }
+  if (count > 0) await batch.commit();
+}

@@ -166,6 +166,12 @@ export const memberService = {
     await deleteDoc(doc(membersCol, member.id));
   },
 
+  /** Borra todas las membresías de un usuario (en cualquier tienda). */
+  async removeAllMembershipsOf(userId: string): Promise<void> {
+    const snap = await getDocs(query(membersCol, where("user_id", "==", userId)));
+    await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+  },
+
   /**
    * Todas las tiendas a las que el usuario tiene acceso, con su rol en cada una.
    * Es la base del modelo multi-tienda: un usuario puede ser dueño de la suya y
