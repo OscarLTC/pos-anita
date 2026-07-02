@@ -4,6 +4,15 @@ export type ProductStatus = "active" | "archived";
 export type product_unit = ProductUnit;
 export type product_status = ProductStatus;
 
+export type PlanId = "free" | "pro";
+
+export interface StoreSubscription {
+  plan: PlanId;
+  activated_at?: Date;
+  expires_at?: Date | null;
+  note?: string;
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -23,6 +32,7 @@ export interface Store {
   logo_url?: string;
   notifications?: NotificationSettings;
   tickets?: TicketSettings;
+  subscription?: StoreSubscription;
   created_at: Date;
 }
 

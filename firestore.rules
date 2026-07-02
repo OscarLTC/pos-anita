@@ -7,6 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Superadmin de la plataforma (panel caserita-admin). El claim se asigna
+    // una sola vez con el script scripts/set-admin-claim.mjs del panel.
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
     function uid() {
       return request.auth.uid;
     }
@@ -157,9 +163,10 @@ service cloud.firestore {
       allow create: if accessIncoming();
     }
 
-    // Todo lo demás queda denegado por defecto.
+    // El superadmin puede leer y escribir todo (las reglas se evalúan en OR:
+    // basta que una regla lo permita). Todo lo demás queda denegado.
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
     }
   }
 }
